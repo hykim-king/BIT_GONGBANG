@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Maven
 /target/
 
@@ -19,3 +20,29 @@ Thumbs.db
 # Backup files
 *~
 *.swp
+=======
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+replay_pid*
+>>>>>>> 94f9091762752535b442064d3b89a1842839669c
