@@ -1,0 +1,21 @@
+# Maven
+/target/
+
+# Eclipse 설정은 팀 전체가 동일 환경이므로 공유 (.classpath/.project/.settings/.springBeans)
+# m2e-wtp가 자동 생성하는 산출물만 제외
+.settings/org.eclipse.wst.common.component.bak
+
+# VS Code
+.vscode/
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*~
+*.swp

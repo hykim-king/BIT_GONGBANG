@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+
+	
+	<!--  MyBatis 설정 -->
+	<!-- @Mapper interface -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<!--일괄 빈 등록-->
+		<property name="basePackage" value="com.pcwk.ehr.mapper"/>
+		
+		<!--연결할 SqlSessionFactory 의 빈 이름을 지정 : 선택  -->
+<!-- 		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/> -->
+		
+		
+		
+	</bean>
+	
+	
+	
+	<!-- SQL SessionTemplate -->
+	<bean id="SqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg index="0" ref = "SqlSessionFactoryBean"></constructor-arg>
+	</bean>	
+	
+	<!--  SQL SessionFactoryBean  -->
+		<bean id = "SqlSessionFactoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">
+			<property name = "dataSource" ref = "dataSource"></property>
+		
+			<!--mybatis-config.xml  -->
+			<property name="configLocation" value="classpath:mybatis-config.xml"></property>
+			
+			<!-- mapper : sql -->
+			<property name="mapperLocations" value="classpath:mapper/**/*.xml"></property>
+
+			
+		</bean>
+
+
+	<!--   -->
+
+
+<!-- Root Context: defines shared resources visible to all other web components -->
+		<aop:config>
+			<aop:pointcut
+				expression="execution(* com.pcwk.ehr..service.*Impl.up*(..))"
+				id="txPointcut" />
+			<!-- advice + pointcut -->
+			<aop:advisor advice-ref="txAdvice"
+				pointcut-ref="txPointcut" />
+
+		</aop:config>
+
+
+
+		<!-- 트랜잭션 Advice: 트랜잭션 규칙, 정책 name = "up*" -> 적용 대상 : 메서드 up 으로 시작 propagation 
+			= "REQUIRES_NEW" -> 항상 새로운 트랜잭션 생성 isolation="SERIALIZABLE" -> 가장 경리 수준 예시 
+			: =>upgradeLevels() update() uploadFile() ================================================================== 
+			name = "*" -> 모든 메서드 propagation="REQUIRED" -> 기본값 read-only="true" -> 읽기 
+			전용 트랜잭션 예시 : => doSelectOne() doSave() doRetrieve() 등.. -->
+
+		<tx:advice id="txAdvice"
+			transaction-manager="transactionManager">
+			<tx:attributes>
+				<tx:method name="up*" propagation="REQUIRES_NEW"
+					isolation="SERIALIZABLE" />
+				<tx:method name="*" propagation="REQUIRED"
+					read-only="true" />
+			</tx:attributes>
+		</tx:advice>
+
+
+		<!-- 트랜잭션 어노테이션 활성화 : @Transactional -->
+		<tx:annotation-driven proxy-target-class="true"
+			transaction-manager="transactionManager" />
+
+
+		<bean id="transactionManager"
+			class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+			<constructor-arg name="dataSource" ref="dataSource"></constructor-arg>
+		</bean>
+
+		<!-- HikariCP -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		<!-- HikariCP -->
+		<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource">
+			<property name="driverClassName"
+				value="oracle.jdbc.driver.OracleDriver" />
+			<property name="jdbcUrl"
+				value="jdbc:oracle:thin:@localhost:1521:xe" />
+			<property name="username" value="scott" />
+			<property name="password" value="pcwk" />
+
+			<!-- option -->
+			<property name="maximumPoolSize" value="10" />
+			<property name="minimumIdle" value="5" />
+			<property name="connectionTimeout" value="30000" />
+			<property name="idleTimeout" value="600000" />
+			<property name="maxLifetime" value="1800000" />
+
+			<!-- maximumPoolSize : 풀에 유지할 최대 연결 수 minimumIdle : 유휴상태로 유지할수 있는 최대 연결 
+				수 connectionTimeout: 연결 시도 시 타임아웃 설정(밀리 초) idleTimeout : 유휴 연결이 풀에서 제거되기 
+				전 대기 시간(밀리 초) maxLifetime : 연결이 풀에서 제거되기 전 최대 생존 시간 입니다.(밀리 초) -->
+
+		</bean>
+
+	</beans>
+
+
