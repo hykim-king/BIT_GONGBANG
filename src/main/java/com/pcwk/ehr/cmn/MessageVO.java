@@ -1,7 +1,7 @@
 package com.pcwk.ehr.cmn;
 
 /**
- * AJAX 공통 JSON 응답 (v2): code, message, data.
+ * AJAX 공통 JSON 응답 : code, message, data.
  */
 public class MessageVO {
 
