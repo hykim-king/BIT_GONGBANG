@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 모든 VO의 공통 부모. 페이징·검색 필드 제공 (v2: SearchVO 대신 DTO 상속).
+ * 모든 VO의 공통 
  */
 public class DTO {
 
