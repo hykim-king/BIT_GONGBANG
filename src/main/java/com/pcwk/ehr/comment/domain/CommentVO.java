@@ -8,6 +8,7 @@ public class CommentVO extends DTO {
 	// target_type(ARTWORK/ARTWORK_ENTRY) + target_id 로 대상 참조.
 	private int commentId;
 	private int memberId;
+	private String nickname;
 	private TargetType targetType;
 	private int targetId;
 	private String content;
@@ -42,6 +43,14 @@ public class CommentVO extends DTO {
 
 	public void setMemberId(int memberId) {
 		this.memberId = memberId;
+	}
+
+	public String getNickname() {
+		return nickname;
+	}
+
+	public void setNickname(String nickname) {
+		this.nickname = nickname;
 	}
 
 	public TargetType getTargetType() {
@@ -86,7 +95,8 @@ public class CommentVO extends DTO {
 
 	@Override
 	public String toString() {
-		return "CommentVO [commentId=" + commentId + ", memberId=" + memberId + ", targetType=" + targetType
+		return "CommentVO [commentId=" + commentId + ", memberId=" + memberId + ", nickname=" + nickname
+				+ ", targetType=" + targetType
 				+ ", targetId=" + targetId + ", content=" + content + ", regDt=" + regDt + ", modDt=" + modDt + "]";
 	}
 }

@@ -27,17 +27,19 @@
 	parameterType="com.pcwk.ehr.comment.domain.CommentVO"
 	resultType="com.pcwk.ehr.comment.domain.CommentVO">
 	SELECT
-		comment_id,
-		member_id,
-		target_type,
-		target_id,
-		content,
-		reg_dt,
-		mod_dt
-	FROM board_comment
-	WHERE target_type = #{targetType}
-	  AND target_id   = #{targetId}
-	ORDER BY comment_id DESC
+		c.comment_id,
+		c.member_id,
+		m.nickname,
+		c.target_type,
+		c.target_id,
+		c.content,
+		c.reg_dt,
+		c.mod_dt
+	FROM board_comment c
+	INNER JOIN member m ON c.member_id = m.member_id
+	WHERE c.target_type = #{targetType}
+	  AND c.target_id   = #{targetId}
+	ORDER BY c.comment_id DESC
 </select>
 
 <select id="countByTarget"
@@ -52,16 +54,18 @@
 <select id="doSelectOne" parameterType="com.pcwk.ehr.comment.domain.CommentVO"
 	resultType="com.pcwk.ehr.comment.domain.CommentVO">
 	SELECT
-		comment_id,
-		member_id,
-		target_type,
-		target_id,
-		content,
-		reg_dt,
-		mod_dt
-	FROM board_comment
-	WHERE comment_id = #{commentId}
-	  AND member_id  = #{memberId}
+		c.comment_id,
+		c.member_id,
+		m.nickname,
+		c.target_type,
+		c.target_id,
+		c.content,
+		c.reg_dt,
+		c.mod_dt
+	FROM board_comment c
+	INNER JOIN member m ON c.member_id = m.member_id
+	WHERE c.comment_id = #{commentId}
+	  AND c.member_id  = #{memberId}
 </select>
 
 <update id="doUpdate" parameterType="com.pcwk.ehr.comment.domain.CommentVO">

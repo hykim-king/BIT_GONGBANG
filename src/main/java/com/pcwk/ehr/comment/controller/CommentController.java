@@ -28,29 +28,41 @@ public class CommentController {
 	@PostMapping("/doRetrieve.do")
 	@ResponseBody
 	public MessageVO doRetrieve(CommentVO param) {
-		log.debug("doRetrieve param: {}", param);
+		log.debug("doRetrieve param: " + param);
 		return new MessageVO("200", "조회 성공", commentService.doRetrieve(param));
 	}
 	
 	@PostMapping("/countByTarget.do")
 	@ResponseBody
 	public MessageVO countByTarget(CommentVO param) {
-		log.debug("countByTarget param: {}", param);
+		log.debug("countByTarget param: " + param);
 		return new MessageVO("200", "조회 성공", commentService.countByTarget(param));
 	}
 	
 	@PostMapping("/doSelectOne.do")
 	@ResponseBody
 	public MessageVO doSelectOne(CommentVO param) {
-		log.debug("doSelectOne param: {}", param);
+		log.debug("doSelectOne param: " + param);
 		CommentVO outVO = commentService.doSelectOne(param);
 		return new MessageVO("200", "조회 성공", outVO);
+	}
+
+	@PostMapping("/doSave.do")
+	@ResponseBody
+	public MessageVO doSave(CommentVO param) {
+		log.debug("doSave param: " + param);
+
+		int flag = commentService.doSave(param);
+		if (flag == 1) {
+			return new MessageVO("200", "댓글 등록 성공", param);
+		}
+		return new MessageVO("400", "댓글 등록 실패(내용 없음 또는 1000자 초과)");
 	}
 
 	@PostMapping("/doUpdate.do")
 	@ResponseBody
 	public MessageVO doUpdate(CommentVO param) {
-		log.debug("doUpdate param: {}", param);
+		log.debug("doUpdate param: " + param);
 		
 		int flag = commentService.doUpdate(param);
 		if (flag == 1) {
@@ -62,7 +74,7 @@ public class CommentController {
 	@PostMapping("/doDelete.do")
 	@ResponseBody
 	public MessageVO doDelete(CommentVO param) {
-		log.debug("doDelete param: {}", param);
+		log.debug("doDelete param: " + param);
 		
 		int flag = commentService.doDelete(param);
 		if (flag == 1) {

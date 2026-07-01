@@ -19,6 +19,7 @@ import com.pcwk.ehr.mapper.CommentMapper;
 public class CommentService implements WorkDiv<CommentVO> {
 
 	Logger log = LogManager.getLogger(getClass());
+	
 	private static final int MAX_CONTENT_LENGTH = 1000;
 	
 	@Autowired
@@ -41,7 +42,7 @@ public class CommentService implements WorkDiv<CommentVO> {
 	@Override
 	@Transactional
 	public int doSave(CommentVO param) {
-		if (!isValidContent(param)) {
+		if (!isContentOk(param)) {
 			return 0;
 		}
 		return commentMapper.doSave(param);
@@ -50,7 +51,7 @@ public class CommentService implements WorkDiv<CommentVO> {
 	@Override
 	@Transactional
 	public int doUpdate(CommentVO param) {
-		if (!isValidContent(param)) {
+		if (!isContentOk(param)) {
 			return 0;
 		}
 		return commentMapper.doUpdate(param);
@@ -79,7 +80,8 @@ public class CommentService implements WorkDiv<CommentVO> {
 		return commentMapper.deleteAll();
 	}
 
-	private boolean isValidContent(CommentVO param) {
+	// 댓글 유효성 
+	private boolean isContentOk(CommentVO param) {
 		if (param == null || param.getContent() == null) {
 			return false;
 		}
