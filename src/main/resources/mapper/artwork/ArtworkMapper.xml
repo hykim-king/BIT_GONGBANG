@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace = 메퍼 인터페이스 경로 -->
+<mapper namespace="com.pcwk.ehr.mapper.ArtworkMapper">
+ 
+	<!-- resultMap : DB 컬럼(snake) -> VO 프로퍼티(camel) -->
+	<resultMap id="artworkMap" type="com.pcwk.ehr.artwork.domain.ArtworkVO">
+		<id     property="artworkId"  column="artwork_id"/>
+		<result property="memberId"   column="member_id"/>
+		<result property="categoryId" column="category_id"/>
+		<result property="isStatus"   column="is_status"/>
+		<result property="title"      column="title"/>
+		<result property="content"    column="content"/>
+		<result property="viewCount"  column="view_count"/>
+		<result property="regDt"      column="reg_dt"/>
+		<result property="modDt"      column="mod_dt"/>
+		<result property="compDt"     column="comp_dt"/>
+	</resultMap>
+ 
+	<!-- ===== 목록 : doRetrieve =====
+	     is_status 조건부:
+	       완성게시판   -> isStatus='Y' 전달 (is_status='Y' 만)
+	       공개작업게시판 -> isStatus=null/'' 전달 (전체 Y+N 노출) -->
+	<select id="doRetrieve" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO" resultMap="artworkMap">
+		SELECT artwork_id, member_id, category_id, is_status, title, content,
+		       view_count, reg_dt, mod_dt, comp_dt
+		  FROM artwork
+		<where>
+			<if test="isStatus != null and isStatus != ''">
+				AND is_status = #{isStatus}
+			</if>
+			<if test="searchWord != null and searchWord != ''">
+				AND title LIKE '%' || #{searchWord} || '%'
+			</if>
+		</where>
+		 ORDER BY artwork_id DESC
+	</select>
+ 
+	<!-- ===== 목록 총건수 : selectCount (페이징용, 동일 조건부) ===== -->
+	<select id="selectCount" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO" resultType="int">
+		SELECT COUNT(*)
+		  FROM artwork
+		<where>
+			<if test="isStatus != null and isStatus != ''">
+				AND is_status = #{isStatus}
+			</if>
+			<if test="searchWord != null and searchWord != ''">
+				AND title LIKE '%' || #{searchWord} || '%'
+			</if>
+		</where>
+	</select>
+ 
+	<!-- ===== 상세 : doSelectOne ===== -->
+	<select id="doSelectOne" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO" resultMap="artworkMap">
+		SELECT artwork_id, member_id, category_id, is_status, title, content,
+		       view_count, reg_dt, mod_dt, comp_dt
+		  FROM artwork
+		 WHERE artwork_id = #{artworkId}
+	</select>
+ 
+	<!-- ===== 등록 : doSave =====
+	     artwork_id=시퀀스, view_count=0, reg_dt=SYSDATE, mod_dt=NULL
+	     is_status / comp_dt 는 Service 에서 세팅
+	       (완성 등록: is_status='Y' + comp_dt=날짜 / 공개작업: is_status='N' + comp_dt=null) -->
+	<insert id="doSave" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO">
+		INSERT INTO artwork (
+			artwork_id, member_id, category_id, is_status,
+			title, content, view_count, reg_dt, mod_dt, comp_dt
+		) VALUES (
+			seq_artwork.NEXTVAL, #{memberId}, #{categoryId}, #{isStatus},
+			#{title}, #{content}, 0, SYSDATE, NULL, #{compDt,jdbcType=DATE}
+		)
+	</insert>
+ 
+	<!-- ===== 수정 : doUpdate ===== -->
+	<update id="doUpdate" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO">
+		UPDATE artwork
+		   SET title    = #{title},
+		       content  = #{content},
+		       mod_dt   = SYSDATE
+		 WHERE artwork_id = #{artworkId}
+	</update>
+ 
+	<!-- ===== 삭제 : doDelete =====
+	     ※ artwork_entry 는 FK CASCADE 자동삭제 /
+	        첨부·댓글·좋아요는 Service 에서 수동삭제 후 호출 -->
+	<delete id="doDelete" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO">
+		DELETE FROM artwork
+		 WHERE artwork_id = #{artworkId}
+	</delete>
+ 
+	<!-- ===== 조회수 증가 : updateViewCount =====
+	     상세 진입 시 view_count + 1 -->
+	<update id="updateViewCount" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO">
+		UPDATE artwork
+		   SET view_count = view_count + 1
+		 WHERE artwork_id = #{artworkId}
+	</update>
+ 
+	<!-- ===== 완성 전환 : updateStatus =====
+	     공개작업('N') -> 완성('Y') + 완성일 세팅 -->
+	<update id="updateStatus" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO">
+		UPDATE artwork
+		   SET is_status = 'Y', 
+		       comp_dt   = SYSDATE,
+		 WHERE artwork_id = #{artworkId}
+	</update>
+	
+	
+	<!-- ===== 테이블삭제 : deleteAll ===== -->
+	<delete id="deleteAll">
+		DELETE FROM artwork
+	</delete>
+ 
+</mapper>
