@@ -30,7 +30,7 @@ public interface ArtworkMapper extends WorkDiv<ArtworkVO> {
     public int selectCount(ArtworkVO param);
     
     // 아트워크 테이블 삭제
-    public int deleteAll(ArtworkVO param);
+    public int deleteAll();
 }
 	 	
 	
