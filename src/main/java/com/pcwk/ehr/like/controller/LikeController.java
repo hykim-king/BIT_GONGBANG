@@ -43,7 +43,7 @@ public class LikeController {
 	@ResponseBody
 	public MessageVO myLikes(LikeVO param) {
 		log.debug("myLikes param: " + param);
-		return new MessageVO("200", "조회 성공", likeService.listByMember(param));
+		return new MessageVO("200", "조회 성공", likeService.selectByMember(param));
 	}
 }
 

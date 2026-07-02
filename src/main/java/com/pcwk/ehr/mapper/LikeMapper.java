@@ -9,8 +9,6 @@ import com.pcwk.ehr.like.domain.LikeVO;
 @Mapper
 public interface LikeMapper {
 
-
-
 	int doSave(LikeVO param);
 
 

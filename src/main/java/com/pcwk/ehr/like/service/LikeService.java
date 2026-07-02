@@ -53,7 +53,7 @@ public class LikeService {
 		return likeMapper.countByTarget(param);
 	}
 
-	public List<LikeVO> listByMember(LikeVO param) {
+	public List<LikeVO> selectByMember(LikeVO param) {
 		return likeMapper.selectByMember(param);
 	}
 
