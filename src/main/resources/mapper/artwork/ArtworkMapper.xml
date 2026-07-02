@@ -3,25 +3,11 @@
 <!-- namespace = 메퍼 인터페이스 경로 -->
 <mapper namespace="com.pcwk.ehr.mapper.ArtworkMapper">
  
-	<!-- resultMap : DB 컬럼(snake) -> VO 프로퍼티(camel) -->
-	<resultMap id="artworkMap" type="com.pcwk.ehr.artwork.domain.ArtworkVO">
-		<id     property="artworkId"  column="artwork_id"/>
-		<result property="memberId"   column="member_id"/>
-		<result property="categoryId" column="category_id"/>
-		<result property="isStatus"   column="is_status"/>
-		<result property="title"      column="title"/>
-		<result property="content"    column="content"/>
-		<result property="viewCount"  column="view_count"/>
-		<result property="regDt"      column="reg_dt"/>
-		<result property="modDt"      column="mod_dt"/>
-		<result property="compDt"     column="comp_dt"/>
-	</resultMap>
- 
 	<!-- ===== 목록 : doRetrieve =====
 	     is_status 조건부:
 	       완성게시판   -> isStatus='Y' 전달 (is_status='Y' 만)
 	       공개작업게시판 -> isStatus=null/'' 전달 (전체 Y+N 노출) -->
-	<select id="doRetrieve" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO" resultMap="artworkMap">
+	<select id="doRetrieve" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO">
 		SELECT artwork_id, member_id, category_id, is_status, title, content,
 		       view_count, reg_dt, mod_dt, comp_dt
 		  FROM artwork
@@ -102,7 +88,7 @@
 	<update id="updateStatus" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO">
 		UPDATE artwork
 		   SET is_status = 'Y', 
-		       comp_dt   = SYSDATE,
+		       comp_dt   = SYSDATE
 		 WHERE artwork_id = #{artworkId}
 	</update>
 	
