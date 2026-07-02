@@ -7,7 +7,7 @@
 	     is_status 조건부:
 	       완성게시판   -> isStatus='Y' 전달 (is_status='Y' 만)
 	       공개작업게시판 -> isStatus=null/'' 전달 (전체 Y+N 노출) -->
-	<select id="doRetrieve" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO">
+	<select id="doRetrieve" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO" resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
 		SELECT artwork_id, member_id, category_id, is_status, title, content,
 		       view_count, reg_dt, mod_dt, comp_dt
 		  FROM artwork
@@ -37,7 +37,7 @@
 	</select>
  
 	<!-- ===== 상세 : doSelectOne ===== -->
-	<select id="doSelectOne" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO" resultMap="artworkMap">
+	<select id="doSelectOne" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO" resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
 		SELECT artwork_id, member_id, category_id, is_status, title, content,
 		       view_count, reg_dt, mod_dt, comp_dt
 		  FROM artwork
