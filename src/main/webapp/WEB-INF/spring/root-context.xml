@@ -114,9 +114,9 @@
 			<property name="driverClassName"
 				value="oracle.jdbc.driver.OracleDriver" />
 			<property name="jdbcUrl"
-				value="jdbc:oracle:thin:@localhost:1521:xe" />
-			<property name="username" value="scott" />
-			<property name="password" value="pcwk" />
+				value="jdbc:oracle:thin:@localhost:1522:xe" />
+			<property name="username" value="rkddmsgn43" />
+			<property name="password" value="Dirhqh91" />
 
 			<!-- option -->
 			<property name="maximumPoolSize" value="10" />

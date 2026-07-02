@@ -64,7 +64,7 @@ class ArtworkMapperJUnit {
     }
  
     /** 1. 등록 */
-    @Disabled
+    //@Disabled
     @Test
     public void doSave() {
         log.debug("---------------------------");
@@ -209,7 +209,7 @@ class ArtworkMapperJUnit {
     }
     
     /** 8. 목록 총건수 (is_status 조건부) */
-    //@Disabled
+    @Disabled
     @Test
     public void selectCount() {
         log.debug("---------------------------");
