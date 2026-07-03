@@ -65,7 +65,7 @@ class ArtworkMapperJUnit {
     }
  
     /** 1. 등록 */
-    @Disabled
+    //@Disabled
     @Test
     public void doSave() {
         log.debug("---------------------------");
@@ -358,7 +358,7 @@ class ArtworkMapperJUnit {
     public void deleteAll() {     
         log.debug("---------------------------");
         log.debug("* deleteAll()*");
-        log.debug("---------------------------");
+        log.debug("---------------S------------");
         artworkMapper.deleteAll();
     }
     

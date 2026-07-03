@@ -16,8 +16,10 @@ public class ArtworkVO extends DTO {
 	private String modDt;       // 수정일      
 	private String compDt;      // 완성일 (공개작업은 null)
 	
-	// ==== 메인페이지 관련 ==== 
-	private int days = 30;   // 인기 집계 기간(일), 기본 30
+	// ==== 메인페이지 관련 (XML 기본값)==== 
+	// 컬럼이 없는 임의의 지정할 값이라 XML에 전달해줄 기본값
+	// Service에서 호출때 값을 변경지정하면 호출값으로 덮어씌워짐
+	private int days = 30;        // 인기 집계 기간(일), 기본 30
 	private int likeWeight = 2;   // 추천 좋아요 가중치, 기본 2
 	
 	// ===== JOIN / 집계 파생필드 (테이블 X, 화면 렌더용) =====

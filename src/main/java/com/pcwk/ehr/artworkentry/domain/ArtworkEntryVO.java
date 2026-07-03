@@ -1,10 +1,4 @@
 
-
-
-
-
-
-
 package com.pcwk.ehr.artworkentry.domain;
 
 import com.pcwk.ehr.cmn.DTO;
@@ -76,6 +70,4 @@ public class ArtworkEntryVO extends DTO {
 		return "ArtworkEntryVO [artworkEntry=" + artworkEntry + ", artworkId=" + artworkId + ", content=" + content
 				+ ", regDt=" + regDt + ", modDt=" + modDt + ", toString()=" + super.toString() + "]";
 	}
-	
-
 }

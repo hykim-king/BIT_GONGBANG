@@ -49,11 +49,17 @@
 
 	<!-- ===== 등록 : doSave ===== -->
 	<insert id="doSave" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO">
+		<!-- 시퀀스에서 artworkId를 받아 다음번호로 기입해두기 -->
+		<selectKey keyProperty="artworkId" resultType="int" order="BEFORE">
+			SELECT seq_artwork.NEXTVAL FROM DUAL
+		</selectKey>
+		<!-- 입력할 artwork컬럼 10개 나열 -->
 		INSERT INTO artwork (
 			artwork_id, member_id, category_id, is_status,
 			title, content, view_count, reg_dt, mod_dt, comp_dt
 		) VALUES (
-			seq_artwork.NEXTVAL, #{memberId}, #{categoryId}, #{isStatus},
+		<!-- #{compDt,jdbcType=DATE} : 첫글작성 Null입력시 Oracle에게 Null값이 DATE 타입임을 알려주기 -->
+			#{artworkId}, #{memberId}, #{categoryId}, #{isStatus},
 			#{title}, #{content}, 0, SYSDATE, NULL, #{compDt,jdbcType=DATE}
 		)
 	</insert>
