@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pcwk.ehr.mapper.CategoryMapper">
+
+	<!-- 공통 컬럼(날짜는 TO_CHAR → String). mapUnderscoreToCamelCase=true -->
+	<sql id="columns">
+		category_id, category_nm,
+		TO_CHAR(reg_dt, 'YYYY-MM-DD HH24:MI:SS') AS reg_dt,
+		TO_CHAR(mod_dt, 'YYYY-MM-DD HH24:MI:SS') AS mod_dt
+	</sql>
+
+	<!-- 전체 목록: 드롭다운/관리용 전체조회라 페이징 불필요(팀 comment 도 페이징 없음). category_id 오름차순 -->
+	<select id="doRetrieve" parameterType="com.pcwk.ehr.category.domain.CategoryVO"
+		resultType="com.pcwk.ehr.category.domain.CategoryVO">
+		SELECT <include refid="columns"/>
+		FROM category
+		ORDER BY category_id
+	</select>
+
+	<!-- 단건(PK) -->
+	<select id="doSelectOne" parameterType="com.pcwk.ehr.category.domain.CategoryVO"
+		resultType="com.pcwk.ehr.category.domain.CategoryVO">
+		SELECT <include refid="columns"/>
+		FROM category
+		WHERE category_id = #{categoryId}
+	</select>
+
+	<!-- 등록: seq_category 채번(BEFORE), reg_dt=SYSDATE -->
+	<insert id="doSave" parameterType="com.pcwk.ehr.category.domain.CategoryVO">
+		<selectKey keyProperty="categoryId" resultType="java.lang.Integer" order="BEFORE">
+			SELECT seq_category.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO category (category_id, category_nm, reg_dt)
+		VALUES (#{categoryId}, #{categoryNm}, SYSDATE)
+	</insert>
+
+	<!-- 수정: 변경 컬럼만 + mod_dt=SYSDATE -->
+	<update id="doUpdate" parameterType="com.pcwk.ehr.category.domain.CategoryVO">
+		UPDATE category
+		<set>
+			<if test="categoryNm != null and categoryNm != ''">category_nm = #{categoryNm},</if>
+			mod_dt = SYSDATE
+		</set>
+		WHERE category_id = #{categoryId}
+	</update>
+
+	<!-- 삭제(artwork.category_id FK 참조 시 무결성 예외는 Controller 에서 방어) -->
+	<delete id="doDelete" parameterType="com.pcwk.ehr.category.domain.CategoryVO">
+		DELETE FROM category WHERE category_id = #{categoryId}
+	</delete>
+
+	<!-- 테스트용 배포전에 삭제 ㄱㄱ -->
+	<delete id="deleteAll">
+		DELETE FROM category
+	</delete>
+
+	<select id="totalCnt" resultType="int">
+		SELECT COUNT(*) FROM category
+	</select>
+
+</mapper>
