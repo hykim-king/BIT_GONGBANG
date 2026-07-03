@@ -1,5 +1,7 @@
 package com.pcwk.ehr.mapper;
 
+import java.util.List;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import com.pcwk.ehr.artwork.domain.ArtworkVO;
@@ -27,9 +29,21 @@ public interface ArtworkMapper extends WorkDiv<ArtworkVO> {
     public int updateStatus(ArtworkVO param);
      
     // 목록 건수 카운트
-    public int selectCount(ArtworkVO param);
+    public Integer selectCount(ArtworkVO param);
     
-    // 아트워크 테이블 삭제
+    //메인 화면 : 완성or공개작업 게시글 N건 조회
+    public List<ArtworkVO> selectMain(ArtworkVO param);
+    
+    //추천 게시물 : 좋와요*likeWeight+조회수 N건 조회
+    public List<ArtworkVO> selectRecommend(ArtworkVO param);
+    
+    //인기 게시글 : 특정 기간내 완성작 N건 조회
+    public List<ArtworkVO> selectPopular(ArtworkVO param);
+    
+    //통합 검색 : 1제목 2내용 3작성자 4카테고리 그외 전체
+    public List<ArtworkVO> search(ArtworkVO param);
+    
+    // 아트워크 테이블 삭제 (테스트 데이터 삭제)
     public int deleteAll();
 }
 	 	

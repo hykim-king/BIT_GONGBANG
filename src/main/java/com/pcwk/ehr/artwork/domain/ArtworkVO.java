@@ -16,6 +16,10 @@ public class ArtworkVO extends DTO {
 	private String modDt;       // 수정일      
 	private String compDt;      // 완성일 (공개작업은 null)
 	
+	// ==== 메인페이지 관련 ==== 
+	private int days = 30;   // 인기 집계 기간(일), 기본 30
+	private int likeWeight = 2;   // 추천 좋아요 가중치, 기본 2
+	
 	// ===== JOIN / 집계 파생필드 (테이블 X, 화면 렌더용) =====
 		// 생성자에는 넣지 않는다. resultType 매핑 시 setter로 채워짐.
 		private String nickname;     // member.nickname (작성자)
@@ -69,7 +73,7 @@ public class ArtworkVO extends DTO {
 		return isStatus;
 	}
 
-	public void setIsStatus(String isStatus) {
+	public void setIsStatus(String isStatus) {  
 		this.isStatus = isStatus;
 	}
 
@@ -144,13 +148,31 @@ public class ArtworkVO extends DTO {
 	public void setLikeCount(int likeCount) {
 		this.likeCount = likeCount;
 	}
+	
+	// ==== 메인 화면 사용 getter/setter ====
+	public int getDays() {
+		return days;
+	}
+	public void setDays(int days) {
+		this.days = days;
+	}
+	
+	public int getLikeWeight() {
+		return likeWeight;
+	}
+	public void setLikeWeight(int likeWeight) {
+		this.likeWeight = likeWeight;
+	}
 
 	@Override
 	public String toString() {
 		return "ArtworkVO [artworkId=" + artworkId + ", memberId=" + memberId + ", categoryId=" + categoryId
 				+ ", isStatus=" + isStatus + ", title=" + title + ", content=" + content + ", viewCount=" + viewCount
-				+ ", regDt=" + regDt + ", modDt=" + modDt + ", compDt=" + compDt + ", nickname=" + nickname
-				+ ", categoryNm=" + categoryNm + ", likeCount=" + likeCount + ", toString()=" + super.toString() + "]";
+				+ ", regDt=" + regDt + ", modDt=" + modDt + ", compDt=" + compDt + ", days=" + days + ", likeWeight="
+				+ likeWeight + ", nickname=" + nickname + ", categoryNm=" + categoryNm + ", likeCount=" + likeCount
+				+ ", toString()=" + super.toString() + "]";
 	}
+
+	
 
 }

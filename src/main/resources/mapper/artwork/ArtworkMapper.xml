@@ -2,12 +2,13 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <!-- namespace = 메퍼 인터페이스 경로 -->
 <mapper namespace="com.pcwk.ehr.mapper.ArtworkMapper">
- 
+
 	<!-- ===== 목록 : doRetrieve =====
 	     is_status 조건부:
 	       완성게시판   -> isStatus='Y' 전달 (is_status='Y' 만)
 	       공개작업게시판 -> isStatus=null/'' 전달 (전체 Y+N 노출) -->
-	<select id="doRetrieve" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO" resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
+	<select id="doRetrieve" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
+	        resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
 		SELECT artwork_id, member_id, category_id, is_status, title, content,
 		       view_count, reg_dt, mod_dt, comp_dt
 		  FROM artwork
@@ -21,9 +22,10 @@
 		</where>
 		 ORDER BY artwork_id DESC
 	</select>
- 
+
 	<!-- ===== 목록 총건수 : selectCount (페이징용, 동일 조건부) ===== -->
-	<select id="selectCount" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO" resultType="int">
+	<select id="selectCount" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
+	        resultType="java.lang.Integer">
 		SELECT COUNT(*)
 		  FROM artwork
 		<where>
@@ -35,19 +37,17 @@
 			</if>
 		</where>
 	</select>
- 
+
 	<!-- ===== 상세 : doSelectOne ===== -->
-	<select id="doSelectOne" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO" resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
+	<select id="doSelectOne" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
+	        resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
 		SELECT artwork_id, member_id, category_id, is_status, title, content,
 		       view_count, reg_dt, mod_dt, comp_dt
 		  FROM artwork
 		 WHERE artwork_id = #{artworkId}
 	</select>
- 
-	<!-- ===== 등록 : doSave =====
-	     artwork_id=시퀀스, view_count=0, reg_dt=SYSDATE, mod_dt=NULL
-	     is_status / comp_dt 는 Service 에서 세팅
-	       (완성 등록: is_status='Y' + comp_dt=날짜 / 공개작업: is_status='N' + comp_dt=null) -->
+
+	<!-- ===== 등록 : doSave ===== -->
 	<insert id="doSave" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO">
 		INSERT INTO artwork (
 			artwork_id, member_id, category_id, is_status,
@@ -57,7 +57,7 @@
 			#{title}, #{content}, 0, SYSDATE, NULL, #{compDt,jdbcType=DATE}
 		)
 	</insert>
- 
+
 	<!-- ===== 수정 : doUpdate ===== -->
 	<update id="doUpdate" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO">
 		UPDATE artwork
@@ -66,15 +66,13 @@
 		       mod_dt   = SYSDATE
 		 WHERE artwork_id = #{artworkId}
 	</update>
- 
-	<!-- ===== 삭제 : doDelete =====
-	     ※ artwork_entry 는 FK CASCADE 자동삭제 /
-	        첨부·댓글·좋아요는 Service 에서 수동삭제 후 호출 -->
+
+	<!-- ===== 삭제 : doDelete ===== -->
 	<delete id="doDelete" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO">
 		DELETE FROM artwork
 		 WHERE artwork_id = #{artworkId}
 	</delete>
- 
+
 	<!-- ===== 조회수 증가 : updateViewCount =====
 	     상세 진입 시 view_count + 1 -->
 	<update id="updateViewCount" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO">
@@ -82,20 +80,127 @@
 		   SET view_count = view_count + 1
 		 WHERE artwork_id = #{artworkId}
 	</update>
- 
+
 	<!-- ===== 완성 전환 : updateStatus =====
 	     공개작업('N') -> 완성('Y') + 완성일 세팅 -->
 	<update id="updateStatus" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO">
 		UPDATE artwork
-		   SET is_status = 'Y', 
+		   SET is_status = 'Y',
 		       comp_dt   = SYSDATE
 		 WHERE artwork_id = #{artworkId}
 	</update>
 	
+	<!-- ===== 메인 목록 : selectMain ===== -->
+	<!-- is_status 조건부: test(service에서 Sutatus를 뺴먹었는지 확인
+	     완성 게시판글인지, 공개작업 게시판글인지 확인하고 #{pageSize}만큼 메인서비스로 전달 -->
+	<select id="selectMain" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
+	        resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
+		SELECT * FROM (
+			SELECT a.artwork_id, a.member_id, a.category_id, a.is_status,
+			       a.title, a.content, a.view_count, a.reg_dt, a.mod_dt, a.comp_dt,
+			       m.nickname,
+			       c.category_nm,
+			       (SELECT COUNT(*) FROM board_like l
+			         WHERE l.target_type = 'ARTWORK' AND l.target_id = a.artwork_id) AS like_count
+			  FROM artwork a
+			  JOIN member   m ON a.member_id   = m.member_id
+			  JOIN category c ON a.category_id = c.category_id
+			<where>
+				<if test="isStatus != null and isStatus != ''">
+					AND a.is_status = #{isStatus}
+				</if>
+			</where>
+			 ORDER BY a.reg_dt DESC, a.artwork_id DESC
+		)
+		WHERE ROWNUM &lt;= #{pageSize}
+	</select>
 	
-	<!-- ===== 테이블삭제 : deleteAll ===== -->
+	<!-- ===== 메인: 추천 : selectRecommend ===== -->
+	<!-- 완성작 대상, (좋아요 * likeWeight + 조회수) 정렬 상위 pageSize 가중치·개수를 서비스에서 조절 -->
+	<!--  likeWeight : 좋아요가 조회수대비 얼마나 가중 을줄지 -->
+	<select id="selectRecommend" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
+	        resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
+		SELECT * FROM (
+			SELECT a.artwork_id, a.member_id, a.category_id, a.is_status,
+			       a.title, a.content, a.view_count, a.reg_dt, a.mod_dt, a.comp_dt,
+			       m.nickname,
+			       c.category_nm,
+			       (SELECT COUNT(*) FROM board_like l
+			         WHERE l.target_type = 'ARTWORK' AND l.target_id = a.artwork_id) AS like_count
+			  FROM artwork a
+			  JOIN member   m ON a.member_id   = m.member_id
+			  JOIN category c ON a.category_id = c.category_id
+			 WHERE a.is_status = 'Y'
+			 ORDER BY (like_count * #{likeWeight} + a.view_count) DESC, a.artwork_id DESC
+		)
+		WHERE ROWNUM &lt;= #{pageSize}
+	</select>
+	
+		<!-- ===== 메인: 인기 : selectPopular ===== -->
+	    <!-- 최근 days일 등록 완성작 중 좋아요순 상위 pageSize 건 -->
+	      
+	<select id="selectPopular" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
+	        resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
+		SELECT * FROM (
+			SELECT a.artwork_id, a.member_id, a.category_id, a.is_status,
+			       a.title, a.content, a.view_count, a.reg_dt, a.mod_dt, a.comp_dt,
+			       m.nickname,
+			       c.category_nm,
+			       (SELECT COUNT(*) FROM board_like l
+			         WHERE l.target_type = 'ARTWORK' AND l.target_id = a.artwork_id) AS like_count
+			  FROM artwork a
+			  JOIN member   m ON a.member_id   = m.member_id
+			  JOIN category c ON a.category_id = c.category_id
+			 WHERE a.is_status = 'Y'
+			   AND a.reg_dt &gt;= SYSDATE - #{days}
+			 ORDER BY like_count DESC, a.view_count DESC, a.artwork_id DESC
+		)
+		WHERE ROWNUM &lt;= #{pageSize}
+	</select>
+	
+	<!-- ===== 통합검색 : search ==== -->
+    <!-- searchDiv: 1=제목, 2=내용, 3=작성자(nickname), 4=카테고리, 그외=전체 -->
+	<select id="search" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
+	        resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
+		SELECT a.artwork_id, a.member_id, a.category_id, a.is_status,
+		       a.title, a.content, a.view_count, a.reg_dt, a.mod_dt, a.comp_dt,
+		       m.nickname,
+		       c.category_nm,
+		       (SELECT COUNT(*) FROM board_like l
+		         WHERE l.target_type = 'ARTWORK' AND l.target_id = a.artwork_id) AS like_count
+		  FROM artwork a
+		  JOIN member   m ON a.member_id   = m.member_id
+		  JOIN category c ON a.category_id = c.category_id
+		<where>
+			<if test="searchWord != null and searchWord != ''">
+				<choose>
+					<when test='searchDiv == "1"'>
+						AND a.title LIKE '%' || #{searchWord} || '%'
+					</when>
+					<when test='searchDiv == "2"'>
+						AND a.content LIKE '%' || #{searchWord} || '%'
+					</when>
+					<when test='searchDiv == "3"'>
+						AND m.nickname LIKE '%' || #{searchWord} || '%'
+					</when>
+					<when test='searchDiv == "4"'>
+						AND c.category_nm LIKE '%' || #{searchWord} || '%'
+					</when>
+					<otherwise>
+						AND ( a.title       LIKE '%' || #{searchWord} || '%'
+						   OR a.content     LIKE '%' || #{searchWord} || '%'
+						   OR m.nickname    LIKE '%' || #{searchWord} || '%'
+						   OR c.category_nm LIKE '%' || #{searchWord} || '%' )
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+		 ORDER BY a.artwork_id DESC
+	</select>
+
+	<!-- ===== 테이블삭제 : deleteAll (테스트 데이터 삭제용) ===== -->
 	<delete id="deleteAll">
 		DELETE FROM artwork
 	</delete>
- 
+
 </mapper>
