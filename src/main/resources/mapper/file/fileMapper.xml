@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pcwk.ehr.mapper.FileMapper">
+
+	<insert id="doSave" parameterType="com.pcwk.ehr.file.domain.FileVO">
+		<selectKey keyProperty="fileId" resultType="java.lang.Integer" order="BEFORE">
+			SELECT seq_attach_file.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO attach_file (
+			file_id,
+			member_id,
+			target_type,
+			target_id,
+			org_file_nm,
+			save_file_nm,
+			file_path,
+			mime_type,
+			is_rep,
+			sort_no,
+			reg_dt
+		) VALUES (
+			#{fileId},
+			#{memberId},
+			#{targetType},
+			#{targetId},
+			#{orgFileNm},
+			#{saveFileNm},
+			#{filePath},
+			#{mimeType},
+			#{isRep},
+			#{sortNo},
+			SYSDATE
+		)
+	</insert>
+
+	<select id="doSelectOne" parameterType="com.pcwk.ehr.file.domain.FileVO"
+		resultType="com.pcwk.ehr.file.domain.FileVO">
+		SELECT
+			file_id,
+			member_id,
+			target_type,
+			target_id,
+			org_file_nm,
+			save_file_nm,
+			file_path,
+			mime_type,
+			is_rep,
+			sort_no,
+			reg_dt
+		FROM attach_file
+		WHERE file_id = #{fileId}
+	</select>
+
+	<select id="selectByTarget" parameterType="com.pcwk.ehr.file.domain.FileVO"
+		resultType="com.pcwk.ehr.file.domain.FileVO">
+		SELECT
+			file_id,
+			member_id,
+			target_type,
+			target_id,
+			org_file_nm,
+			save_file_nm,
+			file_path,
+			mime_type,
+			is_rep,
+			sort_no,
+			reg_dt
+		FROM attach_file
+		WHERE target_type = #{targetType}
+		  AND target_id   = #{targetId}
+		ORDER BY
+			CASE WHEN is_rep = 'Y' THEN 0 ELSE 1 END,
+			sort_no,
+			file_id
+	</select>
+
+	<select id="countByTarget" parameterType="com.pcwk.ehr.file.domain.FileVO"
+		resultType="java.lang.Integer">
+		SELECT COUNT(*)
+		FROM attach_file
+		WHERE target_type = #{targetType}
+		  AND target_id   = #{targetId}
+	</select>
+
+	<update id="clearRepByTarget" parameterType="com.pcwk.ehr.file.domain.FileVO">
+		UPDATE attach_file
+		   SET is_rep = 'N'
+		 WHERE target_type = #{targetType}
+		   AND target_id   = #{targetId}
+		   AND is_rep      = 'Y'
+	</update>
+
+	<update id="updateRep" parameterType="com.pcwk.ehr.file.domain.FileVO">
+		UPDATE attach_file
+		   SET is_rep = 'Y'
+		 WHERE file_id   = #{fileId}
+		   AND member_id = #{memberId}
+	</update>
+
+	<delete id="doDelete" parameterType="com.pcwk.ehr.file.domain.FileVO">
+		DELETE FROM attach_file
+		WHERE file_id   = #{fileId}
+		  AND member_id = #{memberId}
+	</delete>
+
+	<delete id="deleteByTarget" parameterType="com.pcwk.ehr.file.domain.FileVO">
+		DELETE FROM attach_file
+		WHERE target_type = #{targetType}
+		  AND target_id   = #{targetId}
+	</delete>
+
+</mapper>

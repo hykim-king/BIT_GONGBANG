@@ -9,7 +9,14 @@
 		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
 		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
 
-	
+
+	<!-- 파일 업로드 설정 : upload.local.properties 있으면 덮어씀 // 현재 위치는 D:/upload/bit_gongbang-->
+	<!-- 바꾸고 싶으면 upload.local.properties 파일을 만들어서 upload.root.path=D:/내경로/upload 바꾸면 됨-->
+	<!-- 첨부파일 업로드 설정 (upload.local.properties 있으면 덮어씀) -->
+	<context:property-placeholder
+		location="classpath:config/upload.properties,classpath:config/upload.local.properties"
+		ignore-resource-not-found="true" />
+
 	<!--  MyBatis 설정 -->
 	<!-- @Mapper interface -->
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">

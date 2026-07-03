@@ -128,7 +128,7 @@ public class FileVO extends DTO {
 
 	@Override
 	public String toString() {
-		return "AttachFileVO [fileId=" + fileId + ", memberId=" + memberId + ", targetType=" + targetType
+		return "FileVO [fileId=" + fileId + ", memberId=" + memberId + ", targetType=" + targetType
 				+ ", targetId=" + targetId + ", orgFileNm=" + orgFileNm + ", saveFileNm=" + saveFileNm + ", filePath="
 				+ filePath + ", mimeType=" + mimeType + ", isRep=" + isRep + ", sortNo=" + sortNo + ", regDt=" + regDt
 				+ "]";
