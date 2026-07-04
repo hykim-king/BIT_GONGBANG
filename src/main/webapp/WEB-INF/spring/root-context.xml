@@ -121,7 +121,7 @@
 			<property name="driverClassName"
 				value="oracle.jdbc.driver.OracleDriver" />
 			<property name="jdbcUrl"
-				value="jdbc:oracle:thin:@localhost:1522:xe" />
+    		value="jdbc:oracle:thin:@218.144.130.138:1522:xe" />
 			<property name="username" value="rkddmsgn43" />
 			<property name="password" value="Dirhqh91" />
 
