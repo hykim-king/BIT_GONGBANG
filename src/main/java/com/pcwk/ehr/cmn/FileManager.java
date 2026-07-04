@@ -67,15 +67,31 @@ public class FileManager {
 		if (vo == null || vo.getSaveFileNm() == null || vo.getSaveFileNm().isEmpty()) {
 			return;
 		}
-		Path path = resolveAbsolutePath(vo.getFilePath(), vo.getSaveFileNm());
-		if (Files.deleteIfExists(path)) {
-			log.debug("deleted file: {}", path);
+		try {
+			Path path = resolveAbsolutePath(vo.getFilePath(), vo.getSaveFileNm());
+			if (Files.deleteIfExists(path)) {
+				log.debug("deleted file: {}", path);
+			}
+		} catch (IllegalArgumentException e) {
+			log.warn("skip physical delete — invalid path: {}", e.getMessage());
 		}
 	}
 
-	// 다운로드·삭제 시 — upload.root.path + file_path + save_file_nm
+	// 다운로드·삭제 시 — upload.root.path + file_path + save_file_nm (루트 밖 탈출 차단)
 	public Path resolveAbsolutePath(String filePath, String saveFileNm) {
-		return Paths.get(uploadRootPath, filePath, saveFileNm).normalize();
+		if (filePath == null || saveFileNm == null || filePath.isEmpty() || saveFileNm.isEmpty()) {
+			throw new IllegalArgumentException("파일 경로가 올바르지 않습니다.");
+		}
+		if (filePath.contains("..") || saveFileNm.contains("..")) {
+			throw new IllegalArgumentException("파일 경로가 올바르지 않습니다.");
+		}
+
+		Path root = Paths.get(uploadRootPath).toAbsolutePath().normalize();
+		Path resolved = root.resolve(filePath.replace('\\', '/')).resolve(saveFileNm).normalize();
+		if (!resolved.startsWith(root)) {
+			throw new IllegalArgumentException("파일 경로가 올바르지 않습니다.");
+		}
+		return resolved;
 	}
 
 	// 빈 파일·5MB 초과·허용 확장자 아님 → IllegalArgumentException

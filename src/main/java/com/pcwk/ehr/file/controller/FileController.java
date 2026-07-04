@@ -114,31 +114,36 @@ public class FileController {
 			return;
 		}
 
-		Path path = fileManager.resolveAbsolutePath(file.getFilePath(), file.getSaveFileNm());
-		if (!Files.isRegularFile(path)) {
-			response.sendError(HttpServletResponse.SC_NOT_FOUND);
-			return;
-		}
-
-		String orgFileNm = file.getOrgFileNm() != null ? file.getOrgFileNm() : file.getSaveFileNm();
-		String encoded = URLEncoder.encode(orgFileNm, StandardCharsets.UTF_8.name()).replace("+", "%20");
-
-		if (file.getMimeType() != null && !file.getMimeType().isEmpty()) {
-			response.setContentType(file.getMimeType());
-		} else {
-			response.setContentType("application/octet-stream");
-		}
-		response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encoded);
-		response.setContentLengthLong(Files.size(path));
-
-		try (InputStream in = Files.newInputStream(path);
-				OutputStream out = response.getOutputStream()) {
-			byte[] buffer = new byte[8192];
-			int read;
-			while ((read = in.read(buffer)) != -1) {
-				out.write(buffer, 0, read);
+		try {
+			Path path = fileManager.resolveAbsolutePath(file.getFilePath(), file.getSaveFileNm());
+			if (!Files.isRegularFile(path)) {
+				response.sendError(HttpServletResponse.SC_NOT_FOUND);
+				return;
 			}
-			out.flush();
+
+			String orgFileNm = file.getOrgFileNm() != null ? file.getOrgFileNm() : file.getSaveFileNm();
+			String encoded = URLEncoder.encode(orgFileNm, StandardCharsets.UTF_8.name()).replace("+", "%20");
+
+			if (file.getMimeType() != null && !file.getMimeType().isEmpty()) {
+				response.setContentType(file.getMimeType());
+			} else {
+				response.setContentType("application/octet-stream");
+			}
+			response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encoded);
+			response.setContentLengthLong(Files.size(path));
+
+			try (InputStream in = Files.newInputStream(path);
+					OutputStream out = response.getOutputStream()) {
+				byte[] buffer = new byte[8192];
+				int read;
+				while ((read = in.read(buffer)) != -1) {
+					out.write(buffer, 0, read);
+				}
+				out.flush();
+			}
+		} catch (IllegalArgumentException e) {
+			log.warn("download blocked — invalid path for fileId={}", fileId);
+			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 		}
 	}
 }
