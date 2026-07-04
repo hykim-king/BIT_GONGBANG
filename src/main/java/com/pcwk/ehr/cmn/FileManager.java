@@ -18,23 +18,35 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.pcwk.ehr.file.domain.FileVO;
 
+<<<<<<< Updated upstream
 /**
  * 첨부파일 물리 저장/삭제 유틸.
  * DB 메타는 FileService + FileMapper 담당.
  */
+=======
+// 디스크(물리 파일) 전담 — DB attach_file 은 FileService + FileMapper 가 처리
+>>>>>>> Stashed changes
 @Component
 public class FileManager {
 
 	private static final Logger log = LogManager.getLogger(FileManager.class);
 
+<<<<<<< Updated upstream
 	private static final List<String> ALLOWED_EXT = Arrays.asList("jpg", "jpeg", "png", "webp");
 
+=======
+	// 허용 확장자 (이미지만)
+	private static final List<String> ALLOWED_EXT = Arrays.asList("jpg", "jpeg", "png", "webp");
+
+	// upload.properties / upload.local.properties
+>>>>>>> Stashed changes
 	@Value("${upload.root.path}")
 	private String uploadRootPath;
 
 	@Value("${upload.max.size}")
 	private long maxFileSize;
 
+<<<<<<< Updated upstream
 	/**
 	 * 디스크에 저장하고 DB insert용 메타를 채운 FileVO 반환.
 	 * fileId, memberId, isRep, sortNo는 Service에서 설정.
@@ -58,6 +70,22 @@ public class FileManager {
 		// 파일 저장 경로 생성, 예시 : targettype = artwork, targetId = 1, 경로 : D:/upload/bit_gongbang/artwork/1/1.jpg
 		Path dest = dir.resolve(saveFileNm);
 		// 위에서 만든 경로에 파일을 복사해서 저장 
+=======
+	// 디스크 저장 → DB insert 용 FileVO 메타 반환 (fileId·memberId·isRep·sortNo 는 FileService 가 설정)
+	public FileVO save(MultipartFile file, TargetType targetType, int targetId) throws IOException {
+		validate(file);
+
+		String orgFileNm = FilenameUtils.getName(file.getOriginalFilename());
+		String ext = resolveExtension(orgFileNm, file.getContentType());
+		// 저장 파일명은 UUID — 원본명 그대로 쓰면 중복·보안 이슈
+		String saveFileNm = UUID.randomUUID().toString().replace("-", "") + "." + ext;
+		// 상대 경로: ARTWORK/42 또는 ARTWORK_ENTRY/7
+		String relativeDir = targetType.name() + "/" + targetId;
+
+		Path dir = Paths.get(uploadRootPath, relativeDir);
+		Files.createDirectories(dir);
+		Path dest = dir.resolve(saveFileNm);
+>>>>>>> Stashed changes
 		file.transferTo(dest.toFile());
 
 		FileVO vo = new FileVO();
@@ -72,7 +100,11 @@ public class FileManager {
 		return vo;
 	}
 
+<<<<<<< Updated upstream
 	/** 물리 파일 삭제 (없으면 무시) */
+=======
+	// DB 레코드 삭제 전/후 호출 — 실제 파일만 지움 (없으면 무시)
+>>>>>>> Stashed changes
 	public void deletePhysical(FileVO vo) throws IOException {
 		if (vo == null || vo.getSaveFileNm() == null || vo.getSaveFileNm().isEmpty()) {
 			return;
@@ -83,12 +115,20 @@ public class FileManager {
 		}
 	}
 
+<<<<<<< Updated upstream
 	/** 다운로드용 절대 경로 */
+=======
+	// 다운로드·삭제 시 — upload.root.path + file_path + save_file_nm
+>>>>>>> Stashed changes
 	public Path resolveAbsolutePath(String filePath, String saveFileNm) {
 		return Paths.get(uploadRootPath, filePath, saveFileNm).normalize();
 	}
 
+<<<<<<< Updated upstream
     // 파일 유효성 검사 메서드
+=======
+	// 빈 파일·5MB 초과·허용 확장자 아님 → IllegalArgumentException
+>>>>>>> Stashed changes
 	public void validate(MultipartFile file) {
 		if (file == null || file.isEmpty()) {
 			throw new IllegalArgumentException("업로드할 파일이 없습니다.");
@@ -108,6 +148,10 @@ public class FileManager {
 		}
 	}
 
+<<<<<<< Updated upstream
+=======
+	// 확장자: 파일명 우선, 없으면 Content-Type 으로 추론
+>>>>>>> Stashed changes
 	private String resolveExtension(String orgFileNm, String contentType) {
 		String ext = FilenameUtils.getExtension(orgFileNm);
 		if (ext != null && !ext.isEmpty()) {
