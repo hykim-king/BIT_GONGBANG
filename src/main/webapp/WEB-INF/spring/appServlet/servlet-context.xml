@@ -9,15 +9,11 @@
 
 	<!-- DispatcherServlet Context: defines this servlet's request-processing infrastructure -->
 
-<<<<<<< Updated upstream
-    
-=======
 	<!-- multipartResolver 가 ${upload.max.request.size} 를 쓰므로 servlet context 에서도 로딩 -->
 	<context:property-placeholder
 		location="classpath:config/upload.properties,classpath:config/upload.local.properties"
 		ignore-resource-not-found="true" />
 
->>>>>>> Stashed changes
 	<!-- multipart/form-data (web.xml 2.5 → Commons resolver) -->
 	<beans:bean id="multipartResolver"
 		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
