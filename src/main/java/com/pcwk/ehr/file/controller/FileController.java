@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,8 +25,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.pcwk.ehr.cmn.FileManager;
 import com.pcwk.ehr.cmn.MessageVO;
+import com.pcwk.ehr.cmn.SessionConst;
 import com.pcwk.ehr.file.domain.FileVO;
 import com.pcwk.ehr.file.service.FileService;
+import com.pcwk.ehr.member.domain.MemberVO;
 
 @Controller
 @RequestMapping("/file")
@@ -43,13 +46,20 @@ public class FileController {
 		log.debug("FileController");
 	}
 
-	// file_up — multipart: files + targetType, targetId, memberId
+	// file_up — multipart: files + targetType, targetId (memberId는 세션)
 	@PostMapping("/upload.do")
 	@ResponseBody
 	public MessageVO upload(
 			@RequestParam("files") MultipartFile[] files,
-			FileVO param) {
+			FileVO param,
+			HttpSession session) {
 		log.debug("upload param: " + param);
+		MemberVO loginMember = getLoginMember(session);
+		if (loginMember == null) {
+			return new MessageVO("401", "로그인이 필요합니다.");
+		}
+		param.setMemberId(loginMember.getMemberId());
+
 		try {
 			List<FileVO> saved = fileService.upload(files, param);
 			return new MessageVO("200", "업로드 성공", saved);
@@ -62,7 +72,7 @@ public class FileController {
 		}
 	}
 
-	// 대상별 첨부 목록 (sort_no 순)
+	// 대상별 첨부 목록 (sort_no 순) — 공개 조회
 	@PostMapping("/doRetrieve.do")
 	@ResponseBody
 	public MessageVO doRetrieve(FileVO param) {
@@ -73,8 +83,14 @@ public class FileController {
 	// file_rep — 대표 지정 (1번 슬롯)
 	@PostMapping("/setRep.do")
 	@ResponseBody
-	public MessageVO setRep(FileVO param) {
+	public MessageVO setRep(FileVO param, HttpSession session) {
 		log.debug("setRep param: " + param);
+		MemberVO loginMember = getLoginMember(session);
+		if (loginMember == null) {
+			return new MessageVO("401", "로그인이 필요합니다.");
+		}
+		param.setMemberId(loginMember.getMemberId());
+
 		int flag = fileService.setRep(param);
 		if (flag == 1) {
 			return new MessageVO("200", "대표 이미지 지정 성공");
@@ -85,8 +101,14 @@ public class FileController {
 	// file_del
 	@PostMapping("/remove.do")
 	@ResponseBody
-	public MessageVO remove(FileVO param) {
+	public MessageVO remove(FileVO param, HttpSession session) {
 		log.debug("remove param: " + param);
+		MemberVO loginMember = getLoginMember(session);
+		if (loginMember == null) {
+			return new MessageVO("401", "로그인이 필요합니다.");
+		}
+		param.setMemberId(loginMember.getMemberId());
+
 		try {
 			int flag = fileService.remove(param);
 			if (flag == 1) {
@@ -99,7 +121,7 @@ public class FileController {
 		}
 	}
 
-	// file_down — fileId 로 원본 다운로드
+	// file_down — fileId 로 원본 다운로드 (공개)
 	@GetMapping("/download.do")
 	public void download(
 			@RequestParam(name = "fileId") int fileId,
@@ -145,5 +167,13 @@ public class FileController {
 			log.warn("download blocked — invalid path for fileId={}", fileId);
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 		}
+	}
+
+	private MemberVO getLoginMember(HttpSession session) {
+		if (session == null) {
+			return null;
+		}
+		Object loginMember = session.getAttribute(SessionConst.LOGIN_MEMBER);
+		return loginMember instanceof MemberVO ? (MemberVO) loginMember : null;
 	}
 }
