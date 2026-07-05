@@ -44,6 +44,9 @@ public class CommentController {
 	public MessageVO doSelectOne(CommentVO param) {
 		log.debug("doSelectOne param: " + param);
 		CommentVO outVO = commentService.doSelectOne(param);
+		if (outVO == null) {
+			return new MessageVO("404", "댓글을 찾을 수 없습니다.");
+		}
 		return new MessageVO("200", "조회 성공", outVO);
 	}
 

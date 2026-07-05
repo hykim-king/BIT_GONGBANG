@@ -1,6 +1,7 @@
 package com.pcwk.ehr.artwork.domain;
  
 import static org.junit.jupiter.api.Assertions.*;
+
  
 import java.util.List;
  
@@ -16,7 +17,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
  
 import com.pcwk.ehr.mapper.ArtworkMapper;
- 
+
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations = {
         "file:src/main/webapp/WEB-INF/spring/root-context.xml",
@@ -70,8 +71,6 @@ class ArtworkMapperJUnit {
         log.debug("---------------------------");
         log.debug("*doSave()*");
         log.debug("---------------------------");
-        
-        artworkMapper.deleteAll(template);
         
         int flag = artworkMapper.doSave(template);
         
@@ -230,4 +229,137 @@ class ArtworkMapperJUnit {
         assertTrue(totalCnt >= 1);        // 방금 넣은 N 1건 이상
         assertTrue(totalCnt >= compCnt);  // 전체 >= 완성
     }
+    
+    /** 9. 메인: 최신 완성작 */
+    @Disabled
+    @Test
+    public void selectMain() {
+        log.debug("---------------------------");
+        log.debug("*selectMain()*");
+        log.debug("---------------------------");
+        // 완성작 3건 등록
+        for (int i = 1; i <= 3; i++) {
+            ArtworkVO vo = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, "Y",
+                    "메인테스트" + i, "본문" + i, 0, null, null, null);
+            artworkMapper.doSave(vo);
+        }
+
+        ArtworkVO param = new ArtworkVO();
+        param.setIsStatus("Y");
+        param.setPageSize(5);
+        List<ArtworkVO> list = artworkMapper.selectMain(param);
+
+        log.debug("selectMain size={}", list.size());
+        assertNotNull(list);
+        assertTrue(list.size() >= 1);
+        assertTrue(list.size() <= 5);
+        for (ArtworkVO vo : list) {
+            assertEquals("Y", vo.getIsStatus());   // 전부 완성작
+            assertNotNull(vo.getNickname());       // JOIN 확인(작성자)
+        }
+    }
+
+    /** 10. 메인: 추천 */
+    @Disabled
+    @Test
+    public void selectRecommend() {
+        log.debug("---------------------------");
+        log.debug("*selectRecommend()*");
+        log.debug("---------------------------");
+        for (int i = 1; i <= 3; i++) {
+            ArtworkVO vo = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, "Y",
+                    "추천테스트" + i, "본문" + i, 0, null, null, null);
+            artworkMapper.doSave(vo);
+        }
+
+        ArtworkVO param = new ArtworkVO();
+        param.setLikeCount(2);   // 좋아요 가중치
+        param.setPageSize(5);
+        List<ArtworkVO> list = artworkMapper.selectRecommend(param);
+
+        log.debug("selectRecommend size={}", list.size());
+        assertNotNull(list);
+        assertTrue(list.size() <= 5);
+        for (ArtworkVO vo : list) {
+            assertEquals("Y", vo.getIsStatus());
+        }
+    }
+
+    /** 11. 메인: 인기 (최근 days일 등록 완성작 좋아요순) */
+    @Disabled
+    @Test
+    public void selectPopular() {
+        log.debug("---------------------------");
+        log.debug("*selectPopular()*");
+        log.debug("---------------------------");
+        // 완성작 3건 등록 (오늘 등록 → 기간 안에 포함)
+        for (int i = 1; i <= 3; i++) {
+            ArtworkVO vo = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, "Y",
+                    "인기테스트" + i, "본문" + i, 0, null, null, null);
+            artworkMapper.doSave(vo);
+        }
+
+        // (1) 최근 30일
+        ArtworkVO p30 = new ArtworkVO();
+        p30.setDays(30);
+        p30.setPageSize(5);
+        List<ArtworkVO> list30 = artworkMapper.selectPopular(p30);
+        log.debug("30일 인기 size={}", list30.size());
+        assertNotNull(list30);
+        assertTrue(list30.size() >= 1);     // 방금 등록분 포함
+        assertTrue(list30.size() <= 5);
+        for (ArtworkVO vo : list30) {
+            assertEquals("Y", vo.getIsStatus());
+        }
+
+        // (2) 최근 7일 (짧은 기간도 오늘 등록분은 포함돼야 함)
+        ArtworkVO p7 = new ArtworkVO();
+        p7.setDays(7);
+        p7.setPageSize(5);
+        List<ArtworkVO> list7 = artworkMapper.selectPopular(p7);
+        log.debug("7일 인기 size={}", list7.size());
+        assertNotNull(list7);
+        assertTrue(list7.size() >= 1);
+    }
+
+
+    /** 12. 통합검색 */
+    @Disabled
+    @Test
+    public void search() {
+        log.debug("---------------------------");
+        log.debug("*search()*");
+        log.debug("---------------------------");
+        ArtworkVO seed = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, "Y",
+                "검색전용제목ABC", "검색본문내용", 0, null, null, null);
+        artworkMapper.doSave(seed);
+
+        // (1) 제목 검색 : searchDiv=1
+        ArtworkVO p1 = new ArtworkVO();
+        p1.setSearchDiv("1");
+        p1.setSearchWord("검색전용제목");
+        List<ArtworkVO> byTitle = artworkMapper.search(p1);
+        log.debug("제목검색 size={}", byTitle.size());
+        assertNotNull(byTitle);
+        assertTrue(byTitle.size() >= 1);
+        assertTrue(byTitle.get(0).getTitle().contains("검색전용제목"));
+
+        // (2) 전체 검색 : searchDiv=0 -> otherwise (제목/내용/닉네임/카테고리 OR)
+        ArtworkVO p2 = new ArtworkVO();
+        p2.setSearchDiv("0");
+        p2.setSearchWord("검색본문내용");
+        List<ArtworkVO> byAll = artworkMapper.search(p2);
+        log.debug("전체검색 size={}", byAll.size());
+        assertTrue(byAll.size() >= 1);
+    }
+    
+    //@Disabled
+    @Test
+    public void deleteAll() {     
+        log.debug("---------------------------");
+        log.debug("* deleteAll()*");
+        log.debug("---------------S------------");
+        artworkMapper.deleteAll();
+    }
+    
 }
