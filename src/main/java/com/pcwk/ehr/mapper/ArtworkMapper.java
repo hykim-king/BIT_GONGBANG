@@ -42,7 +42,10 @@ public interface ArtworkMapper extends WorkDiv<ArtworkVO> {
     
     //통합 검색 : 1제목 2내용 3작성자 4카테고리 그외 전체
     public List<ArtworkVO> search(ArtworkVO param);
-    
+
+    //통합 검색 건수 : search 페이징 totalCnt 산출(searchDiv/searchWord 분기, member+category JOIN)
+    public Integer searchCount(ArtworkVO param);
+
     // 아트워크 테이블 삭제 (테스트 데이터 삭제)
     public int deleteAll();
 }
