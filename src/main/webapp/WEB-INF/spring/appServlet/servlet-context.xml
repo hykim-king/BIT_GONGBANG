@@ -33,6 +33,10 @@
 		<beans:property name="suffix" value=".jsp" />
 	</beans:bean>
 	
-	<context:component-scan base-package="com.pcwk.ehr" />
+	<!-- Controller 만 — Service 는 root-context.xml 에서 스캔 (@Transactional) -->
+	<context:component-scan base-package="com.pcwk.ehr" use-default-filters="false">
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
 	
 </beans:beans>
