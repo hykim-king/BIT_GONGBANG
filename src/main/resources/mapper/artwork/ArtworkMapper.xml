@@ -164,16 +164,54 @@
 		WHERE ROWNUM &lt;= #{pageSize}
 	</select>
 	
-	<!-- ===== 통합검색 : search ==== -->
+	<!-- ===== 통합검색 : search (페이징) ==== -->
     <!-- searchDiv: 1=제목, 2=내용, 3=작성자(nickname), 4=카테고리, 그외=전체 -->
 	<select id="search" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
 	        resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
-		SELECT a.artwork_id, a.member_id, a.category_id, a.is_status,
-		       a.title, a.content, a.view_count, a.reg_dt, a.mod_dt, a.comp_dt,
-		       m.nickname,
-		       c.category_nm,
-		       (SELECT COUNT(*) FROM board_like l
-		         WHERE l.target_type = 'ARTWORK' AND l.target_id = a.artwork_id) AS like_count
+		SELECT * FROM (
+			SELECT a.artwork_id, a.member_id, a.category_id, a.is_status,
+			       a.title, a.content, a.view_count, a.reg_dt, a.mod_dt, a.comp_dt,
+			       m.nickname,
+			       c.category_nm,
+			       (SELECT COUNT(*) FROM board_like l
+			         WHERE l.target_type = 'ARTWORK' AND l.target_id = a.artwork_id) AS like_count,
+			       ROW_NUMBER() OVER (ORDER BY a.artwork_id DESC) AS rn
+			  FROM artwork a
+			  JOIN member   m ON a.member_id   = m.member_id
+			  JOIN category c ON a.category_id = c.category_id
+			<where>
+				<if test="searchWord != null and searchWord != ''">
+					<choose>
+						<when test='searchDiv == "1"'>
+							AND a.title LIKE '%' || #{searchWord} || '%'
+						</when>
+						<when test='searchDiv == "2"'>
+							AND a.content LIKE '%' || #{searchWord} || '%'
+						</when>
+						<when test='searchDiv == "3"'>
+							AND m.nickname LIKE '%' || #{searchWord} || '%'
+						</when>
+						<when test='searchDiv == "4"'>
+							AND c.category_nm LIKE '%' || #{searchWord} || '%'
+						</when>
+						<otherwise>
+							AND ( a.title       LIKE '%' || #{searchWord} || '%'
+							   OR a.content     LIKE '%' || #{searchWord} || '%'
+							   OR m.nickname    LIKE '%' || #{searchWord} || '%'
+							   OR c.category_nm LIKE '%' || #{searchWord} || '%' )
+						</otherwise>
+					</choose>
+				</if>
+			</where>
+		)
+		WHERE rn BETWEEN ((#{pageNo} - 1) * #{pageSize} + 1) AND (#{pageNo} * #{pageSize})
+		ORDER BY rn
+	</select>
+
+	<!-- ===== 통합검색 건수 : searchCount ===== -->
+	<select id="searchCount" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
+	        resultType="java.lang.Integer">
+		SELECT COUNT(*)
 		  FROM artwork a
 		  JOIN member   m ON a.member_id   = m.member_id
 		  JOIN category c ON a.category_id = c.category_id
@@ -201,7 +239,6 @@
 				</choose>
 			</if>
 		</where>
-		 ORDER BY a.artwork_id DESC
 	</select>
 
 	<!-- ===== 테이블삭제 : deleteAll (테스트 데이터 삭제용) ===== -->

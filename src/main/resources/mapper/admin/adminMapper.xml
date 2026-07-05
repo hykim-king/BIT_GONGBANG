@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pcwk.ehr.mapper.AdminMapper">
+
+	<!-- ===== 대시보드 통계(각 테이블 총건수) ===== -->
+	<select id="memberTotalCnt"   resultType="int">SELECT COUNT(*) FROM member</select>
+	<select id="artworkTotalCnt"  resultType="int">SELECT COUNT(*) FROM artwork</select>
+	<select id="commentTotalCnt"  resultType="int">SELECT COUNT(*) FROM board_comment</select>
+	<select id="likeTotalCnt"     resultType="int">SELECT COUNT(*) FROM board_like</select>
+	<select id="categoryTotalCnt" resultType="int">SELECT COUNT(*) FROM category</select>
+
+	<!-- ===== 회원 관리: 목록(페이징·검색) =====
+	     검색: email/nickname LIKE. password 는 민감정보라 조회 제외. rn(ROW_NUMBER) 페이징 -->
+	<select id="memberList" parameterType="com.pcwk.ehr.member.domain.MemberVO"
+	        resultType="com.pcwk.ehr.member.domain.MemberVO">
+		SELECT * FROM (
+			SELECT member_id, is_admin, email, nickname, user_intro,
+			       TO_CHAR(reg_dt, 'YYYY-MM-DD HH24:MI:SS') AS reg_dt,
+			       TO_CHAR(mod_dt, 'YYYY-MM-DD HH24:MI:SS') AS mod_dt,
+			       ROW_NUMBER() OVER (ORDER BY member_id DESC) AS rn
+			  FROM member
+			<where>
+				<if test="searchWord != null and searchWord != ''">
+					AND ( email    LIKE '%' || #{searchWord} || '%'
+					   OR nickname LIKE '%' || #{searchWord} || '%' )
+				</if>
+			</where>
+		)
+		WHERE rn BETWEEN ((#{pageNo} - 1) * #{pageSize} + 1) AND (#{pageNo} * #{pageSize})
+		ORDER BY rn
+	</select>
+
+	<!-- 회원 총건수(검색조건 동일) -->
+	<select id="memberCnt" parameterType="com.pcwk.ehr.member.domain.MemberVO" resultType="int">
+		SELECT COUNT(*)
+		  FROM member
+		<where>
+			<if test="searchWord != null and searchWord != ''">
+				AND ( email    LIKE '%' || #{searchWord} || '%'
+				   OR nickname LIKE '%' || #{searchWord} || '%' )
+			</if>
+		</where>
+	</select>
+
+	<!-- ===== 게시물(작품) 관리: 목록(페이징·검색·상태) =====
+	     is_status 미지정 시 완성('Y')+공개작업('N') 전체. 검색: title/작성자 nickname. content(CLOB) 제외 -->
+	<select id="artworkList" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
+	        resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
+		SELECT * FROM (
+			SELECT a.artwork_id, a.member_id, a.category_id, a.is_status,
+			       a.title, a.view_count,
+			       TO_CHAR(a.reg_dt,  'YYYY-MM-DD HH24:MI:SS') AS reg_dt,
+			       TO_CHAR(a.comp_dt, 'YYYY-MM-DD HH24:MI:SS') AS comp_dt,
+			       m.nickname,
+			       c.category_nm,
+			       (SELECT COUNT(*) FROM board_like l
+			         WHERE l.target_type = 'ARTWORK' AND l.target_id = a.artwork_id) AS like_count,
+			       ROW_NUMBER() OVER (ORDER BY a.artwork_id DESC) AS rn
+			  FROM artwork a
+			  JOIN member   m ON a.member_id   = m.member_id
+			  JOIN category c ON a.category_id = c.category_id
+			<where>
+				<if test="isStatus != null and isStatus != ''">
+					AND a.is_status = #{isStatus}
+				</if>
+				<if test="searchWord != null and searchWord != ''">
+					AND ( a.title    LIKE '%' || #{searchWord} || '%'
+					   OR m.nickname LIKE '%' || #{searchWord} || '%' )
+				</if>
+			</where>
+		)
+		WHERE rn BETWEEN ((#{pageNo} - 1) * #{pageSize} + 1) AND (#{pageNo} * #{pageSize})
+		ORDER BY rn
+	</select>
+
+	<!-- 게시물 총건수(검색조건 동일) -->
+	<select id="artworkCnt" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO" resultType="int">
+		SELECT COUNT(*)
+		  FROM artwork a
+		  JOIN member   m ON a.member_id   = m.member_id
+		  JOIN category c ON a.category_id = c.category_id
+		<where>
+			<if test="isStatus != null and isStatus != ''">
+				AND a.is_status = #{isStatus}
+			</if>
+			<if test="searchWord != null and searchWord != ''">
+				AND ( a.title    LIKE '%' || #{searchWord} || '%'
+				   OR m.nickname LIKE '%' || #{searchWord} || '%' )
+			</if>
+		</where>
+	</select>
+
+</mapper>

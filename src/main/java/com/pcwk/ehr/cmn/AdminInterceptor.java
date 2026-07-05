@@ -12,6 +12,8 @@ import com.pcwk.ehr.member.domain.MemberVO;
 
 /**
  * 관리자 전용 URL(/admin/**) 접근 제어.
+ * 팀 세션 모델 기준: 세션 loginMember(MemberVO)의 is_admin='Y' 만 통과한다.
+ * (m1 로그인은 세션에 loginMember 만 저장하고 별도 "isAdmin" 속성은 두지 않으므로 VO 필드로 판정)
  */
 public class AdminInterceptor implements HandlerInterceptor {
 
