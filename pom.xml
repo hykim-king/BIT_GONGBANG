@@ -32,12 +32,11 @@
 
 	<!-- 의존성 목록 -->
 	<dependencies>
-		<!-- Source: https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+		<!-- @ResponseBody JSON 변환 (Spring GsonHttpMessageConverter) -->
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.13.2</version>
-			<scope>compile</scope>
 		</dependency>
 
 		<dependency>
@@ -178,13 +177,6 @@
 			<groupId>org.mybatis</groupId>
 			<artifactId>mybatis-spring</artifactId>
 			<version>${mybatis-spring-version}</version>
-		</dependency>
-
-		<!-- JSON (@ResponseBody MessageVO) -->
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>2.17.2</version>
 		</dependency>
 
 		<!-- BCrypt (M1 회원 비밀번호 암호화) -->
