@@ -10,6 +10,11 @@
 		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
 
 
+	<!-- upload.properties 로딩 — FileManager @Value 주입을 위해 root-context 에도 필요 -->
+	<context:property-placeholder
+		location="classpath:config/upload.properties,classpath:config/upload.local.properties"
+		ignore-resource-not-found="true" />
+
 	<!--  MyBatis 설정 -->
 	<!-- @Mapper interface -->
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
