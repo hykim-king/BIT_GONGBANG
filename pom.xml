@@ -162,6 +162,20 @@
 			<version>${mybatis-spring-version}</version>
 		</dependency>
 
+		<!-- JSON (@ResponseBody MessageVO) -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.17.2</version>
+		</dependency>
+
+		<!-- BCrypt (M1 회원 비밀번호 암호화) -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-crypto</artifactId>
+			<version>5.8.16</version>
+		</dependency>
+
 		<!-- ========================= -->
 		<!-- 3. Oracle driver -->
 		<!-- ========================= -->
