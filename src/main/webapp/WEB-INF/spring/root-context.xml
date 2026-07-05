@@ -9,7 +9,12 @@
 		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
 		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
 
-	
+
+	<!-- upload.properties 로딩 — FileManager @Value 주입을 위해 root-context 에도 필요 -->
+	<context:property-placeholder
+		location="classpath:config/upload.properties,classpath:config/upload.local.properties"
+		ignore-resource-not-found="true" />
+
 	<!--  MyBatis 설정 -->
 	<!-- @Mapper interface -->
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
@@ -48,6 +53,13 @@
 
 
 <!-- Root Context: defines shared resources visible to all other web components -->
+
+		<!-- Service·@Component 등 — @Transactional 은 이 컨텍스트에서만 적용 -->
+		<context:component-scan base-package="com.pcwk.ehr">
+			<context:exclude-filter type="annotation"
+				expression="org.springframework.stereotype.Controller" />
+		</context:component-scan>
+
 		<aop:config>
 			<aop:pointcut
 				expression="execution(* com.pcwk.ehr..service.*Impl.up*(..))"

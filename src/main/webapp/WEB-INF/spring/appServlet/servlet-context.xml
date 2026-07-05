@@ -8,6 +8,18 @@
 		http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
 
 	<!-- DispatcherServlet Context: defines this servlet's request-processing infrastructure -->
+
+	<!-- multipartResolver 가 ${upload.max.request.size} 를 쓰므로 servlet context 에서도 로딩 -->
+	<context:property-placeholder
+		location="classpath:config/upload.properties,classpath:config/upload.local.properties"
+		ignore-resource-not-found="true" />
+
+	<!-- multipart/form-data (web.xml 2.5 → Commons resolver) -->
+	<beans:bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<beans:property name="maxUploadSize" value="${upload.max.request.size}" />
+		<beans:property name="defaultEncoding" value="UTF-8" />
+	</beans:bean>
 	
 	<!-- Enables the Spring MVC @Controller programming model -->
 	<annotation-driven />
@@ -35,6 +47,10 @@
 		<beans:property name="suffix" value=".jsp" />
 	</beans:bean>
 	
-	<context:component-scan base-package="com.pcwk.ehr" />
+	<!-- Controller 만 — Service 는 root-context.xml 에서 스캔 (@Transactional) -->
+	<context:component-scan base-package="com.pcwk.ehr" use-default-filters="false">
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
 	
 </beans:beans>

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace = FileMapper 인터페이스 경로 -->
+<mapper namespace="com.pcwk.ehr.mapper.FileMapper">
+
+	<!-- doSave: attach_file INSERT, selectKey 로 file_id 선발급 -->
+	<insert id="doSave" parameterType="com.pcwk.ehr.file.domain.FileVO">
+		<selectKey keyProperty="fileId" resultType="java.lang.Integer" order="BEFORE">
+			SELECT seq_attach_file.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO attach_file (
+			file_id,
+			member_id,
+			target_type,
+			target_id,
+			org_file_nm,
+			save_file_nm,
+			file_path,
+			mime_type,
+			is_rep,
+			sort_no,
+			reg_dt
+		) VALUES (
+			#{fileId},
+			#{memberId},
+			#{targetType},
+			#{targetId},
+			#{orgFileNm},
+			#{saveFileNm},
+			#{filePath},
+			#{mimeType},
+			#{isRep},
+			#{sortNo},
+			SYSDATE
+		)
+	</insert>
+
+	<!-- doSelectOne: PK file_id -->
+	<select id="doSelectOne" parameterType="com.pcwk.ehr.file.domain.FileVO"
+		resultType="com.pcwk.ehr.file.domain.FileVO">
+		SELECT
+			file_id,
+			member_id,
+			target_type,
+			target_id,
+			org_file_nm,
+			save_file_nm,
+			file_path,
+			mime_type,
+			is_rep,
+			sort_no,
+			reg_dt
+		FROM attach_file
+		WHERE file_id = #{fileId}
+	</select>
+
+	<!-- 대상(ARTWORK/ARTWORK_ENTRY)별 목록, sort_no 순 -->
+	<select id="selectByTarget" parameterType="com.pcwk.ehr.file.domain.FileVO"
+		resultType="com.pcwk.ehr.file.domain.FileVO">
+		SELECT
+			file_id,
+			member_id,
+			target_type,
+			target_id,
+			org_file_nm,
+			save_file_nm,
+			file_path,
+			mime_type,
+			is_rep,
+			sort_no,
+			reg_dt
+		FROM attach_file
+		WHERE target_type = #{targetType}
+		  AND target_id   = #{targetId}
+		ORDER BY sort_no, file_id
+	</select>
+
+	<!-- countByTarget: 업로드 9장 제한 검사 -->
+	<select id="countByTarget" parameterType="com.pcwk.ehr.file.domain.FileVO"
+		resultType="java.lang.Integer">
+		SELECT COUNT(*)
+		FROM attach_file
+		WHERE target_type = #{targetType}
+		  AND target_id   = #{targetId}
+	</select>
+
+	<!-- updateRep: 대표 지정 + 1번 슬롯 고정 (sort_no=1) -->
+	<update id="updateRep" parameterType="com.pcwk.ehr.file.domain.FileVO">
+		UPDATE attach_file
+		   SET is_rep = 'Y',
+		       sort_no = 1
+		 WHERE file_id   = #{fileId}
+		   AND member_id = #{memberId}
+	</update>
+
+	<!-- updateSortAndRep: 슬롯 교환·1번 삭제 후 재정렬 -->
+	<update id="updateSortAndRep" parameterType="com.pcwk.ehr.file.domain.FileVO">
+		UPDATE attach_file
+		   SET sort_no = #{sortNo},
+		       is_rep  = #{isRep}
+		 WHERE file_id = #{fileId}
+	</update>
+
+	<!-- selectBySortNo: 1번 슬롯 holder 조회 (setRep 교환) -->
+	<select id="selectBySortNo" parameterType="com.pcwk.ehr.file.domain.FileVO"
+		resultType="com.pcwk.ehr.file.domain.FileVO">
+		SELECT
+			file_id,
+			member_id,
+			target_type,
+			target_id,
+			org_file_nm,
+			save_file_nm,
+			file_path,
+			mime_type,
+			is_rep,
+			sort_no,
+			reg_dt
+		FROM attach_file
+		WHERE target_type = #{targetType}
+		  AND target_id   = #{targetId}
+		  AND sort_no     = #{sortNo}
+	</select>
+
+	<!-- decrementSortNoAfter: 삭제한 sort_no 보다 큰 번호 -1 -->
+	<update id="decrementSortNoAfter" parameterType="com.pcwk.ehr.file.domain.FileVO">
+		UPDATE attach_file
+		   SET sort_no = sort_no - 1
+		 WHERE target_type = #{targetType}
+		   AND target_id   = #{targetId}
+		   AND sort_no     > #{sortNo}
+	</update>
+
+	<!-- doDelete: 본인 첨부 1건 (file_id + member_id) -->
+	<delete id="doDelete" parameterType="com.pcwk.ehr.file.domain.FileVO">
+		DELETE FROM attach_file
+		WHERE file_id   = #{fileId}
+		  AND member_id = #{memberId}
+	</delete>
+
+	<!-- deleteByTarget: 글 삭제 시 해당 target 첨부 전부 (앱단 수동삭제) -->
+	<delete id="deleteByTarget" parameterType="com.pcwk.ehr.file.domain.FileVO">
+		DELETE FROM attach_file
+		WHERE target_type = #{targetType}
+		  AND target_id   = #{targetId}
+	</delete>
+
+</mapper>
