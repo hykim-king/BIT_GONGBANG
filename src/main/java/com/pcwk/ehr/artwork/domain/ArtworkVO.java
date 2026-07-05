@@ -1,5 +1,8 @@
 package com.pcwk.ehr.artwork.domain;
 
+import java.util.List;
+
+import com.pcwk.ehr.artworkentry.domain.ArtworkEntryVO;
 import com.pcwk.ehr.cmn.DTO;
 
 public class ArtworkVO extends DTO {
@@ -15,6 +18,10 @@ public class ArtworkVO extends DTO {
 	private String regDt;       // 등록일      
 	private String modDt;       // 수정일      
 	private String compDt;      // 완성일 (공개작업은 null)
+	private List<ArtworkEntryVO> entryList;   // 공개작업 상세: 작업일지 타임라인
+
+	public List<ArtworkEntryVO> getEntryList() { return entryList; }
+	public void setEntryList(List<ArtworkEntryVO> entryList) { this.entryList = entryList; }
 	
 	// ==== 메인페이지 관련 (XML 기본값)==== 
 	// 컬럼이 없는 임의의 지정할 값이라 XML에 전달해줄 기본값

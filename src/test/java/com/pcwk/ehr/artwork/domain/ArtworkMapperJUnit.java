@@ -16,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
  
+import com.pcwk.ehr.artworkentry.domain.ArtworkEntryVO;
+import com.pcwk.ehr.mapper.ArtworkEntryMapper;
 import com.pcwk.ehr.mapper.ArtworkMapper;
 
 @ExtendWith(SpringExtension.class)
@@ -28,7 +30,11 @@ class ArtworkMapperJUnit {
  
     @Autowired
     private ArtworkMapper artworkMapper;
- 
+
+    // selectCount 하이브리드 필터 검증용 (artwork_entry 존재 여부 확인)
+    @Autowired
+    private ArtworkEntryMapper artworkEntryMapper;
+
     // 테스트용 FK (DB에 존재하는 값이어야 함)
     private static final int    TEST_MEMBER_ID   = 1;
     private static final int    TEST_CATEGORY_ID = 1;
@@ -79,7 +85,7 @@ class ArtworkMapperJUnit {
     }
  
     /** 2. 목록 (is_status 분기) */
-    @Disabled
+    //@Disabled
     @Test
     public void doRetrieve() {
         log.debug("---------------------------");
@@ -97,7 +103,7 @@ class ArtworkMapperJUnit {
     }
  
     /** 3. 상세 */
-    @Disabled
+    //@Disabled
     @Test
     public void doSelectOne() {
         log.debug("---------------------------");
@@ -117,7 +123,7 @@ class ArtworkMapperJUnit {
     }
  
     /** 4. 수정 */
-    @Disabled
+    //@Disabled
     @Test
     public void doUpdate() {
         log.debug("---------------------------");
@@ -140,7 +146,7 @@ class ArtworkMapperJUnit {
     }
  
     /** 5. 삭제 */
-    @Disabled
+    //@Disabled
     @Test
     public void doDelete() {
         log.debug("---------------------------");
@@ -159,7 +165,7 @@ class ArtworkMapperJUnit {
     }
     
     /** 6. 조회수 증가 */
-    @Disabled
+    //@Disabled
     @Test
     public void updateViewCount() {
         log.debug("---------------------------");
@@ -187,7 +193,7 @@ class ArtworkMapperJUnit {
     }
     
     /** 7. 완성 전환 (N -> Y, comp_dt 세팅) */
-    @Disabled
+    //@Disabled
     @Test
     public void updateStatus() {
         log.debug("---------------------------");
@@ -207,31 +213,56 @@ class ArtworkMapperJUnit {
         assertNotNull(outVO.getCompDt());          // 완성일 세팅됨
     }
     
-    /** 8. 목록 총건수 (is_status 조건부) */
-    @Disabled
+    /** 8. 목록 총건수 (하이브리드 조건부: is_status='N' 이거나 작업일지 존재) */
+    //@Disabled
     @Test
     public void selectCount() {
         log.debug("---------------------------");
         log.debug("*selectCount()*");
         log.debug("---------------------------");
-        artworkMapper.doSave(template);      // 'N' 최소 1건 보장
 
-        // 전체(공개작업 관점): isStatus 미설정 -> null
-        ArtworkVO all = new ArtworkVO();
-        int totalCnt = artworkMapper.selectCount(all);
+        // 0. 다른 테스트가 남긴 데이터와 섞이지 않도록 이 테스트 전용 마커로 제목을 구분
+        String marker = "SELCNT_" + System.currentTimeMillis();
 
-        // 완성만: isStatus='Y'
-        ArtworkVO comp = new ArtworkVO();
-        comp.setIsStatus("Y");
-        int compCnt = artworkMapper.selectCount(comp);
+        // 1. N상태 작품 등록 : 하이브리드 필터에서 무조건 포함 대상
+        ArtworkVO working = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, "N",
+                marker + "_작업중", "본문", 0, null, null, null);
+        artworkMapper.doSave(working);
 
-        log.debug("totalCnt={}, compCnt={}", totalCnt, compCnt);
-        assertTrue(totalCnt >= 1);        // 방금 넣은 N 1건 이상
-        assertTrue(totalCnt >= compCnt);  // 전체 >= 완성
+        // 2. Y상태 + 작업일지 없음 : 완성필터(Y)에는 포함되지만 하이브리드 필터에는 제외되어야 함
+        ArtworkVO compNoEntry = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, "Y",
+                marker + "_완성_일지없음", "본문", 0, null, null, null);
+        artworkMapper.doSave(compNoEntry);
+
+        // 3. Y상태 + 작업일지 있음 : 완성 전환되어도 일지가 있으므로 하이브리드 필터에도 포함되어야 함
+        ArtworkVO compWithEntry = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, "Y",
+                marker + "_완성_일지있음", "본문", 0, null, null, null);
+        artworkMapper.doSave(compWithEntry);
+        ArtworkEntryVO entry = new ArtworkEntryVO(0, compWithEntry.getArtworkId(), "작업일지 내용", null, null);
+        artworkEntryMapper.doSave(entry);
+
+        // 4. 하이브리드 카운트 : isStatus 미설정 + marker 로 이 테스트가 만든 3건만 한정
+        ArtworkVO hybridParam = new ArtworkVO();
+        hybridParam.setSearchWord(marker);
+        int hybridCnt = artworkMapper.selectCount(hybridParam);
+
+        // 5. 완성 카운트 : isStatus='Y' + 동일 marker 한정
+        ArtworkVO compParam = new ArtworkVO();
+        compParam.setIsStatus("Y");
+        compParam.setSearchWord(marker);
+        int compCnt = artworkMapper.selectCount(compParam);
+
+        log.debug("hybridCnt={}, compCnt={}", hybridCnt, compCnt);
+
+        // 6. 하이브리드 = N(1) + Y·일지있음(1) = 2건 (Y·일지없음은 제외되어야 함)
+        assertEquals(2, hybridCnt);
+
+        // 7. 완성 카운트 = Y 2건(일지 유무 무관 전부 포함)
+        assertEquals(2, compCnt);
     }
     
     /** 9. 메인: 최신 완성작 */
-    @Disabled
+    //@Disabled
     @Test
     public void selectMain() {
         log.debug("---------------------------");
@@ -260,7 +291,7 @@ class ArtworkMapperJUnit {
     }
 
     /** 10. 메인: 추천 */
-    @Disabled
+    //@Disabled
     @Test
     public void selectRecommend() {
         log.debug("---------------------------");
@@ -273,7 +304,7 @@ class ArtworkMapperJUnit {
         }
 
         ArtworkVO param = new ArtworkVO();
-        param.setLikeCount(2);   // 좋아요 가중치
+        param.setLikeWeight(2);   // 좋아요 가중치
         param.setPageSize(5);
         List<ArtworkVO> list = artworkMapper.selectRecommend(param);
 
@@ -286,7 +317,7 @@ class ArtworkMapperJUnit {
     }
 
     /** 11. 메인: 인기 (최근 days일 등록 완성작 좋아요순) */
-    @Disabled
+    //@Disabled
     @Test
     public void selectPopular() {
         log.debug("---------------------------");
@@ -324,7 +355,7 @@ class ArtworkMapperJUnit {
 
 
     /** 12. 통합검색 */
-    @Disabled
+    //@Disabled
     @Test
     public void search() {
         log.debug("---------------------------");
@@ -335,9 +366,13 @@ class ArtworkMapperJUnit {
         artworkMapper.doSave(seed);
 
         // (1) 제목 검색 : searchDiv=1
+        // search()는 ROW_NUMBER() 기반 페이징 쿼리라 pageNo/pageSize를 반드시 세팅해야 함
+        // (미설정 시 기본값 0 -> rn BETWEEN 1 AND 0 이 되어 결과가 항상 0건 나옴)
         ArtworkVO p1 = new ArtworkVO();
         p1.setSearchDiv("1");
         p1.setSearchWord("검색전용제목");
+        p1.setPageNo(1);
+        p1.setPageSize(10);
         List<ArtworkVO> byTitle = artworkMapper.search(p1);
         log.debug("제목검색 size={}", byTitle.size());
         assertNotNull(byTitle);
@@ -348,6 +383,8 @@ class ArtworkMapperJUnit {
         ArtworkVO p2 = new ArtworkVO();
         p2.setSearchDiv("0");
         p2.setSearchWord("검색본문내용");
+        p2.setPageNo(1);
+        p2.setPageSize(10);
         List<ArtworkVO> byAll = artworkMapper.search(p2);
         log.debug("전체검색 size={}", byAll.size());
         assertTrue(byAll.size() >= 1);
