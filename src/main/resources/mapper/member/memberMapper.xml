@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pcwk.ehr.mapper.MemberMapper">
+
+	<!-- ===== 목록 : doRetrieve (관리자·페이징용, password 제외) ===== -->
+	<select id="doRetrieve" parameterType="com.pcwk.ehr.member.domain.MemberVO"
+		resultType="com.pcwk.ehr.member.domain.MemberVO">
+		SELECT member_id, is_admin, email, nickname, user_intro, reg_dt, mod_dt
+		  FROM member
+		<where>
+			<if test="searchWord != null and searchWord != ''">
+				AND (email LIKE '%' || #{searchWord} || '%'
+				  OR nickname LIKE '%' || #{searchWord} || '%')
+			</if>
+		</where>
+		 ORDER BY member_id DESC
+	</select>
+
+	<!-- ===== 상세 : doSelectOne ===== -->
+	<select id="doSelectOne" parameterType="com.pcwk.ehr.member.domain.MemberVO"
+		resultType="com.pcwk.ehr.member.domain.MemberVO">
+		SELECT member_id, is_admin, email, nickname, user_intro, reg_dt, mod_dt
+		  FROM member
+		 WHERE member_id = #{memberId}
+	</select>
+
+	<!-- ===== 로그인 : selectByEmail ===== -->
+	<select id="selectByEmail" parameterType="com.pcwk.ehr.member.domain.MemberVO"
+		resultType="com.pcwk.ehr.member.domain.MemberVO">
+		SELECT member_id, password, is_admin, email, nickname, user_intro, reg_dt, mod_dt
+		  FROM member
+		 WHERE email = #{email}
+	</select>
+
+	<!-- ===== 마이페이지 : selectMyPage ===== -->
+	<select id="selectMyPage" parameterType="com.pcwk.ehr.member.domain.MemberVO"
+		resultType="com.pcwk.ehr.member.domain.MemberVO">
+		SELECT m.member_id,
+		       m.is_admin,
+		       m.email,
+		       m.nickname,
+		       m.user_intro,
+		       m.reg_dt,
+		       m.mod_dt,
+		       (SELECT COUNT(*) FROM artwork a WHERE a.member_id = m.member_id) AS artwork_cnt,
+		       (SELECT COUNT(*) FROM board_like l WHERE l.member_id = m.member_id) AS like_cnt
+		  FROM member m
+		 WHERE m.member_id = #{memberId}
+	</select>
+
+	<!-- ===== 이메일 중복 ===== -->
+	<select id="countByEmail" parameterType="com.pcwk.ehr.member.domain.MemberVO"
+		resultType="int">
+		SELECT COUNT(*)
+		  FROM member
+		 WHERE email = #{email}
+	</select>
+
+	<!-- ===== 닉네임 중복 (본인 제외) ===== -->
+	<select id="countByNickname" parameterType="com.pcwk.ehr.member.domain.MemberVO"
+		resultType="int">
+		SELECT COUNT(*)
+		  FROM member
+		 WHERE nickname = #{nickname}
+		<if test="memberId != 0">
+		   AND member_id != #{memberId}
+		</if>
+	</select>
+
+	<!-- ===== 등록 : doSave (회원가입) ===== -->
+	<insert id="doSave" parameterType="com.pcwk.ehr.member.domain.MemberVO">
+		<selectKey keyProperty="memberId" resultType="int" order="BEFORE">
+			SELECT seq_member.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO member (
+			member_id, password, is_admin, email, nickname, user_intro, reg_dt
+		) VALUES (
+			#{memberId}, #{password}, #{isAdmin}, #{email}, #{nickname},
+			#{userIntro,jdbcType=NVARCHAR}, SYSDATE
+		)
+	</insert>
+
+	<!-- ===== 수정 : doUpdate ===== -->
+	<update id="doUpdate" parameterType="com.pcwk.ehr.member.domain.MemberVO">
+		UPDATE member
+		   SET mod_dt = SYSDATE
+		<if test="nickname != null and nickname != ''">
+		     , nickname = #{nickname}
+		</if>
+		<if test="userIntro != null">
+		     , user_intro = #{userIntro,jdbcType=NVARCHAR}
+		</if>
+		<if test="password != null and password != ''">
+		     , password = #{password}
+		</if>
+		 WHERE member_id = #{memberId}
+	</update>
+
+	<!-- ===== 삭제 : doDelete (탈퇴) ===== -->
+	<delete id="doDelete" parameterType="com.pcwk.ehr.member.domain.MemberVO">
+		DELETE FROM member
+		 WHERE member_id = #{memberId}
+	</delete>
+
+	<!-- 테스트용 -->
+	<delete id="deleteAll">
+		DELETE FROM member
+	</delete>
+
+</mapper>
