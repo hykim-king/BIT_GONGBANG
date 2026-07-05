@@ -20,6 +20,10 @@
 			<mapping path="/member/doDelete.do"/>
 			<beans:bean class="com.pcwk.ehr.cmn.LoginInterceptor"/>
 		</interceptor>
+		<interceptor>
+			<mapping path="/admin/**"/>
+			<beans:bean class="com.pcwk.ehr.cmn.AdminInterceptor"/>
+		</interceptor>
 	</interceptors>
 
 	<!-- Handles HTTP GET requests for /resources/** by efficiently serving up static resources in the ${webappRoot}/resources directory -->

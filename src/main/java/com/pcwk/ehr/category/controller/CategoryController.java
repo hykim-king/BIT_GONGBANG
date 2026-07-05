@@ -20,12 +20,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.pcwk.ehr.category.domain.CategoryVO;
 import com.pcwk.ehr.category.service.CategoryService;
 import com.pcwk.ehr.cmn.MessageVO;
+import com.pcwk.ehr.cmn.SessionConst;
+import com.pcwk.ehr.member.domain.MemberVO;
 
 /**
  * 카테고리 컨트롤러. 전부 AJAX(@ResponseBody MessageVO, code "200"성공/"400"실패).
  * - doRetrieve/doSelectOne : 공개 조회(GET).
- * - doSave/doUpdate/doDelete : 관리자(세션 isAdmin=='Y') 전용(POST).
- * ※ /category 는 /admin/** 밖이라 인터셉터 대상이 아니며, 쓰기 3종은 세션 isAdmin 가드로 보호한다.
+ * - doSave/doUpdate/doDelete : 관리자(세션 loginMember 의 is_admin=='Y') 전용(POST).
+ * ※ /category 는 /admin/** 밖이라 인터셉터 대상이 아니며, 쓰기 3종은 loginMember.getIsAdmin() 가드로 보호한다.
  */
 @Controller
 @RequestMapping("/category")
@@ -116,8 +118,12 @@ public class CategoryController {
 		}
 	}
 
-	/** 관리자 여부(세션) */
+	/**
+	 * 관리자 여부(세션). 팀 세션 모델 기준 — m1 로그인은 세션에 loginMember(MemberVO)만 저장하므로
+	 * 별도 "isAdmin" 속성이 아니라 MemberVO.is_admin 필드로 판정한다.
+	 */
 	private boolean isAdmin(HttpSession session) {
-		return "Y".equals(session.getAttribute("isAdmin"));
+		Object loginMember = session.getAttribute(SessionConst.LOGIN_MEMBER);
+		return loginMember instanceof MemberVO && "Y".equals(((MemberVO) loginMember).getIsAdmin());
 	}
 }
