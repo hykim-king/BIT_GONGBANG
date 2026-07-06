@@ -6,19 +6,24 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.pcwk.ehr.artwork.domain.ArtworkVO;
+import com.pcwk.ehr.category.domain.CategoryVO;
 import com.pcwk.ehr.mapper.ArtworkMapper;
+import com.pcwk.ehr.mapper.CategoryMapper;
 
 @ExtendWith(SpringExtension.class)
+// @AfterAll 을 non-static 으로 쓰기 위해 인스턴스를 클래스당 1개로 (주입된 mapper 접근 목적)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ContextConfiguration(locations = {
         "file:src/main/webapp/WEB-INF/spring/root-context.xml",
         "file:src/main/webapp/WEB-INF/spring/appServlet/servlet-context.xml" })
@@ -34,11 +39,18 @@ class ArtworkEntryMapperJUnit {
     @Autowired
     private ArtworkMapper artworkMapper;
 
+    // category FK 동적 확보용.
+    // TEST_CATEGORY_ID 하드코딩은 위험 : CategoryMapperTest 가 category 를 deleteAll() 하면
+    // 시퀀스(seq_category)는 되돌아가지 않아 해당 ID 가 영영 사라진다(ORA-02291 FK 위반).
+    // 그래서 매 테스트마다 존재하는 category 를 동적으로 조회해 쓰고, 없으면 새로 만든다.
+    @Autowired
+    private CategoryMapper categoryMapper;
+
     private static final int    TEST_MEMBER_ID   = 1; // DB에 존재해야 하는 테스트용 FK
-    private static final int    TEST_CATEGORY_ID = 1; // DB에 존재해야 하는 테스트용 FK
 
     private ArtworkEntryVO template; // 작업일지 템플릿 (각 테스트에서 재사용)
     private int hostArtworkId;       // 위 템플릿이 참조할 상위 artwork PK
+    private int testCategoryId;      // setUp()에서 동적으로 확보한 category FK (하드코딩 제거)
 
     @BeforeEach
     public void setUp() {
@@ -46,8 +58,11 @@ class ArtworkEntryMapperJUnit {
         log.debug("*BeforeEach()*");
         log.debug("---------------------------");
 
+        // 0. category FK 동적 확보 (하드코딩 대신 실제 존재하는 ID 사용)
+        testCategoryId = resolveCategoryId();
+
         // 1. 상위 작품(artwork) 선등록 : artwork_entry 는 artwork_id FK 를 반드시 필요로 함
-        ArtworkVO hostArtwork = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, "N",
+        ArtworkVO hostArtwork = new ArtworkVO(0, TEST_MEMBER_ID, testCategoryId, "N",
                 "작업일지 테스트용 작품", "작업일지 테스트용 본문", 0, null, null, null);
         artworkMapper.doSave(hostArtwork); // selectKey 로 hostArtwork.artworkId를 채움
 
@@ -66,6 +81,39 @@ class ArtworkEntryMapperJUnit {
         log.debug("---------------------------");
         log.debug("*AfterEach()*");
         log.debug("---------------------------");
+    }
+
+    /**
+     * category FK 로 쓸 category_id 를 동적으로 확보.
+     * 1) 이미 등록된 category 가 있으면 그 중 첫 번째 ID 재사용 (불필요한 행 증가 방지)
+     * 2) 하나도 없으면(예: CategoryMapperTest 가 방금 다 지운 경우) 새로 하나 만들어 발급받은 ID 사용
+     * → 다른 테스트가 category 를 어떻게 만들고 지우든 항상 유효한 FK 를 확보한다.
+     */
+    private int resolveCategoryId() {
+        List<CategoryVO> list = categoryMapper.doRetrieve(new CategoryVO());
+        if (list != null && !list.isEmpty()) {
+            return list.get(0).getCategoryId();   // 존재하는 category 재사용
+        }
+        CategoryVO category = new CategoryVO();
+        category.setCategoryNm("JUnit");
+        categoryMapper.doSave(category);          // 없으면 새로 등록(selectKey 로 categoryId 채워짐)
+        return category.getCategoryId();
+    }
+
+    /**
+     * 클래스의 모든 테스트가 끝난 뒤, 이 테스트가 남긴 데이터를 전부 정리.
+     * 작업일지(artwork_entry)와 상위 작품(artwork)이 남으면 artwork 가 category_id 를 FK 로 참조하므로
+     * 이후 CategoryMapperTest 의 DELETE FROM category(deleteAll)가 ORA-02292(child record found)로 실패한다.
+     * artwork_entry 를 먼저 비우고 artwork 를 비우면 그 참조가 사라져 안전해진다.
+     * (artwork 만 지워도 artwork_entry 는 FK CASCADE 로 함께 삭제되지만, 명시적으로 둘 다 정리)
+     */
+    @AfterAll
+    public void afterAllCleanUp() {
+        log.debug("---------------------------");
+        log.debug("*AfterAll() - artwork_entry / artwork 데이터 정리*");
+        log.debug("---------------------------");
+        artworkEntryMapper.deleteAll(); // 남은 작업일지 전부 삭제
+        artworkMapper.deleteAll();      // 남은 상위 작품 전부 삭제
     }
 
     /** 1. 등록 */

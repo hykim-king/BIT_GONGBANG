@@ -2,25 +2,31 @@ package com.pcwk.ehr.artwork.domain;
  
 import static org.junit.jupiter.api.Assertions.*;
 
+
  
 import java.util.List;
  
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
  
 import com.pcwk.ehr.artworkentry.domain.ArtworkEntryVO;
+import com.pcwk.ehr.category.domain.CategoryVO;
 import com.pcwk.ehr.mapper.ArtworkEntryMapper;
 import com.pcwk.ehr.mapper.ArtworkMapper;
+import com.pcwk.ehr.mapper.CategoryMapper;
 
 @ExtendWith(SpringExtension.class)
+// @AfterAll 을 non-static 으로 쓰기 위해 인스턴스를 클래스당 1개로 (주입된 mapper 접근 목적)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ContextConfiguration(locations = {
         "file:src/main/webapp/WEB-INF/spring/root-context.xml",
         "file:src/main/webapp/WEB-INF/spring/appServlet/servlet-context.xml" })
@@ -35,21 +41,32 @@ class ArtworkMapperJUnit {
     @Autowired
     private ArtworkEntryMapper artworkEntryMapper;
 
+    // category FK 동적 확보용.
+    // TEST_CATEGORY_ID=1 하드코딩은 위험 : CategoryMapperTest 가 category 를 deleteAll() 하면
+    // 시퀀스(seq_category)는 되돌아가지 않아 category_id=1 이 영영 사라진다(ORA-02291 FK 위반).
+    // 그래서 매 테스트마다 존재하는 category 를 동적으로 조회해 쓰고, 없으면 새로 만든다.
+    @Autowired
+    private CategoryMapper categoryMapper;
+
     // 테스트용 FK (DB에 존재하는 값이어야 함)
     private static final int    TEST_MEMBER_ID   = 1;
-    private static final int    TEST_CATEGORY_ID = 1;
-    private static final String TEST_STATUS      = "N"; // 공개작업으로 등록
- 
+    private static final String TEST_STATUS      = "N"; // 공개작업으로 등록 
+
     private ArtworkVO template;
- 
+    private int testCategoryId; // setUp()에서 동적으로 확보한 category FK (하드코딩 제거)
+
     @BeforeEach
     public void setUp() {
         log.debug("---------------------------");
         log.debug("*BeforeEach()*");
         log.debug("---------------------------");
+
+        // category FK 동적 확보 (하드코딩 1 대신 실제 존재하는 ID 사용)
+        testCategoryId = resolveCategoryId();
+
         // 생성자 순서: artworkId, memberId, categoryId, isStatus,
         //             title, content, viewCount, regDt, modDt, compDt
-        template = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, TEST_STATUS,
+        template = new ArtworkVO(0, TEST_MEMBER_ID, testCategoryId, TEST_STATUS,
                 "JUnit 테스트 작품", "JUnit 본문 내용", 0, null, null, null);
         assertNotNull(artworkMapper); // DI 주입 확인
     }
@@ -60,7 +77,40 @@ class ArtworkMapperJUnit {
         log.debug("*AfterEach()*");
         log.debug("---------------------------");
     }
- 
+
+    /**
+     * 클래스의 모든 테스트가 끝난 뒤, 이 테스트가 남긴 artwork 데이터를 전부 정리.
+     * 대부분의 테스트 메서드는 artwork 를 등록만 하고 지우지 않아 행이 남는데,
+     * artwork 는 category_id 를 FK 로 참조하므로 남아 있으면
+     * 이후 CategoryMapperTest 의 DELETE FROM category(deleteAll)가
+     * ORA-02292(child record found)로 실패한다.
+     * 여기서 artwork 를 먼저 비우면(artwork_entry 는 FK CASCADE 로 함께 삭제) 그 참조가 사라져 안전해진다.
+     */
+    @AfterAll
+    public void afterAllCleanUp() {
+        log.debug("---------------------------");
+        log.debug("*AfterAll() - artwork 데이터 정리*");
+        log.debug("---------------------------");
+        artworkMapper.deleteAll(); // 남은 artwork 전부 삭제 (artwork_entry 는 CASCADE)
+    }
+
+    /**
+     * category FK 로 쓸 category_id 를 동적으로 확보.
+     * 1) 이미 등록된 category 가 있으면 그 중 첫 번째 ID 재사용 (불필요한 행 증가 방지)
+     * 2) 하나도 없으면(예: CategoryMapperTest 가 방금 다 지운 경우) 새로 하나 만들어 발급받은 ID 사용
+     * → 다른 테스트가 category 를 어떻게 만들고 지우든 항상 유효한 FK 를 확보한다.
+     */
+    private int resolveCategoryId() {
+        List<CategoryVO> list = categoryMapper.doRetrieve(new CategoryVO());
+        if (list != null && !list.isEmpty()) {
+            return list.get(0).getCategoryId();   // 존재하는 category 재사용
+        }
+        CategoryVO category = new CategoryVO();
+        category.setCategoryNm("JUnit");
+        categoryMapper.doSave(category);          // 없으면 새로 등록(selectKey 로 categoryId 채워짐)
+        return category.getCategoryId();
+    }
+
     /** 방금 등록한(가장 최신) artwork_id 조회 헬퍼 (doRetrieve = artwork_id DESC 정렬) */
     private int getLatestId() {
         ArtworkVO param = new ArtworkVO();
@@ -225,17 +275,17 @@ class ArtworkMapperJUnit {
         String marker = "SELCNT_" + System.currentTimeMillis();
 
         // 1. N상태 작품 등록 : 하이브리드 필터에서 무조건 포함 대상
-        ArtworkVO working = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, "N",
+        ArtworkVO working = new ArtworkVO(0, TEST_MEMBER_ID, testCategoryId, "N",
                 marker + "_작업중", "본문", 0, null, null, null);
         artworkMapper.doSave(working);
 
         // 2. Y상태 + 작업일지 없음 : 완성필터(Y)에는 포함되지만 하이브리드 필터에는 제외되어야 함
-        ArtworkVO compNoEntry = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, "Y",
+        ArtworkVO compNoEntry = new ArtworkVO(0, TEST_MEMBER_ID, testCategoryId, "Y",
                 marker + "_완성_일지없음", "본문", 0, null, null, null);
         artworkMapper.doSave(compNoEntry);
 
         // 3. Y상태 + 작업일지 있음 : 완성 전환되어도 일지가 있으므로 하이브리드 필터에도 포함되어야 함
-        ArtworkVO compWithEntry = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, "Y",
+        ArtworkVO compWithEntry = new ArtworkVO(0, TEST_MEMBER_ID, testCategoryId, "Y",
                 marker + "_완성_일지있음", "본문", 0, null, null, null);
         artworkMapper.doSave(compWithEntry);
         ArtworkEntryVO entry = new ArtworkEntryVO(0, compWithEntry.getArtworkId(), "작업일지 내용", null, null);
@@ -270,7 +320,7 @@ class ArtworkMapperJUnit {
         log.debug("---------------------------");
         // 완성작 3건 등록
         for (int i = 1; i <= 3; i++) {
-            ArtworkVO vo = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, "Y",
+            ArtworkVO vo = new ArtworkVO(0, TEST_MEMBER_ID, testCategoryId, "Y",
                     "메인테스트" + i, "본문" + i, 0, null, null, null);
             artworkMapper.doSave(vo);
         }
@@ -298,7 +348,7 @@ class ArtworkMapperJUnit {
         log.debug("*selectRecommend()*");
         log.debug("---------------------------");
         for (int i = 1; i <= 3; i++) {
-            ArtworkVO vo = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, "Y",
+            ArtworkVO vo = new ArtworkVO(0, TEST_MEMBER_ID, testCategoryId, "Y",
                     "추천테스트" + i, "본문" + i, 0, null, null, null);
             artworkMapper.doSave(vo);
         }
@@ -325,7 +375,7 @@ class ArtworkMapperJUnit {
         log.debug("---------------------------");
         // 완성작 3건 등록 (오늘 등록 → 기간 안에 포함)
         for (int i = 1; i <= 3; i++) {
-            ArtworkVO vo = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, "Y",
+            ArtworkVO vo = new ArtworkVO(0, TEST_MEMBER_ID, testCategoryId, "Y",
                     "인기테스트" + i, "본문" + i, 0, null, null, null);
             artworkMapper.doSave(vo);
         }
@@ -361,7 +411,7 @@ class ArtworkMapperJUnit {
         log.debug("---------------------------");
         log.debug("*search()*");
         log.debug("---------------------------");
-        ArtworkVO seed = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, "Y",
+        ArtworkVO seed = new ArtworkVO(0, TEST_MEMBER_ID, testCategoryId, "Y",
                 "검색전용제목ABC", "검색본문내용", 0, null, null, null);
         artworkMapper.doSave(seed);
 
@@ -395,8 +445,9 @@ class ArtworkMapperJUnit {
     public void deleteAll() {     
         log.debug("---------------------------");
         log.debug("* deleteAll()*");
-        log.debug("---------------S------------");
+        log.debug("---------------------------");
         artworkMapper.deleteAll();
     }
     
+   
 }

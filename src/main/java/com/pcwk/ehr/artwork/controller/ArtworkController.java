@@ -1,7 +1,8 @@
 package com.pcwk.ehr.artwork.controller;
- 
+
+import java.io.IOException;
 import java.util.List;
- 
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -202,10 +203,10 @@ public class ArtworkController {
 
 	/**
 	 * 삭제 처리.
-	 * 서비스 doDelete 가 삭제 오케스트레이션 담당(첨부/댓글/좋아요 수동삭제는 팀원 Mapper 연동 후).
+	 * 서비스 doDelete 가 삭제 오케스트레이션 담당(첨부 DB+디스크 / 댓글 / 좋아요 수동삭제 후 작품 삭제).
 	 * artwork_entry 는 FK CASCADE 로 자동 삭제.
 	 * 삭제 전에 is_status 를 확인해(삭제 후엔 조회 불가) 원래 있던 게시판 목록으로 redirect.
-	 * (하드코딩된 complete 고정 redirect 이슈 수정)
+	 * 첨부 물리파일 삭제 중 IOException 발생 시 트랜잭션 롤백(작품 유지) → 상세로 되돌림.
 	 */
 	@PostMapping("/doDelete")
 	public String doDelete(@ModelAttribute ArtworkVO param) {
@@ -213,7 +214,13 @@ public class ArtworkController {
 
 		ArtworkVO target = artworkService.findOne(param);            // 삭제 전 is_status 확보 (삭제 후엔 조회 불가)
 		String isStatus = target != null ? target.getIsStatus() : param.getIsStatus(); // 재조회 실패 시 폴백
-		artworkService.doDelete(param);                              // 실제 삭제
+		try {
+			artworkService.doDelete(param);                          // 실제 삭제 (첨부 물리파일 포함)
+		} catch (IOException e) {
+			// 첨부 물리파일 삭제 실패 → 트랜잭션 롤백으로 작품/참조 데이터 유지. 상세로 되돌림.
+			log.error("doDelete 실패(첨부 파일 삭제): artworkId=" + param.getArtworkId(), e);
+			return "redirect:" + viewUrl(isStatus, param.getArtworkId());
+		}
 		return "redirect:" + listUrl(isStatus);                      // is_status 에 맞는 게시판 목록으로 이동
 	}
 
