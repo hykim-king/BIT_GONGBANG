@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -38,7 +37,6 @@ class MemberMapperJUnit {
 	@Autowired
 	private MemberMapper memberMapper;
 
-	private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 	private MemberVO template;
 
 	@BeforeEach
@@ -49,7 +47,7 @@ class MemberMapperJUnit {
 		template = new MemberVO();
 		template.setEmail(TEST_EMAIL);
 		template.setNickname(TEST_NICK);
-		template.setPassword(encoder.encode("password123"));
+		template.setPassword("password123");
 		template.setIsAdmin("N");
 		template.setUserIntro("JUnit 테스트 회원");
 		assertNotNull(memberMapper);
@@ -108,15 +106,15 @@ class MemberMapperJUnit {
 		//2. 등록
 		log.debug("2. 등록");
 		memberMapper.doSave(template);
-		//3. email 로 조회 후 저장된 BCrypt 비밀번호가 원문과 matches 되는지 검증
-		log.debug("3. email 로 조회 후 저장된 BCrypt 비밀번호가 원문과 matches 되는지 검증");
+		//3. email 로 조회 후 저장된 비밀번호가 원문과 일치하는지 검증(암호화 제거)
+		log.debug("3. email 로 조회 후 저장된 비밀번호가 원문과 일치하는지 검증(암호화 제거)");
 		MemberVO param = new MemberVO();
 		param.setEmail(TEST_EMAIL);
 		MemberVO found = memberMapper.selectByEmail(param);
 
 		assertNotNull(found);
 		assertEquals(TEST_EMAIL, found.getEmail());
-		assertTrue(encoder.matches("password123", found.getPassword()));
+		assertEquals("password123", found.getPassword());
 	}
 
 	//@Disabled

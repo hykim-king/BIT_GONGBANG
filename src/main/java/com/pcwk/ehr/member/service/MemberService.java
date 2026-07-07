@@ -7,7 +7,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,8 +26,6 @@ public class MemberService implements WorkDiv<MemberVO> {
 
 	@Autowired
 	private MemberMapper memberMapper;
-
-	private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
 	public MemberService() {
 		log.debug("MemberService");
@@ -57,7 +54,7 @@ public class MemberService implements WorkDiv<MemberVO> {
 			return 0;
 		}
 
-		param.setPassword(passwordEncoder.encode(param.getPassword()));
+		param.setPassword(param.getPassword().trim());
 		param.setIsAdmin("N");
 		return memberMapper.doSave(param);
 	}
@@ -85,7 +82,7 @@ public class MemberService implements WorkDiv<MemberVO> {
 			if (!isPasswordPairOk(param.getPassword(), param.getConfirmPassword())) {
 				return 0;
 			}
-			param.setPassword(passwordEncoder.encode(param.getPassword()));
+			param.setPassword(param.getPassword().trim());
 		} else {
 			param.setPassword(null);
 		}
@@ -111,7 +108,10 @@ public class MemberService implements WorkDiv<MemberVO> {
 		if (dbMember == null) {
 			return null;
 		}
-		if (!passwordEncoder.matches(param.getPassword(), dbMember.getPassword())) {
+		if (dbMember.getPassword() == null) {
+			return null;
+		}
+		if (!param.getPassword().trim().equals(dbMember.getPassword())) {
 			return null;
 		}
 
