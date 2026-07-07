@@ -10,7 +10,7 @@ import com.pcwk.ehr.cmn.DTO;
  *
  * 컬럼 매핑(mapUnderscoreToCamelCase=true) — 최종 DDL 기준:
  *   MEMBER_ID   NUMBER(10)     → memberId   (PK, seq_member)
- *   PASSWORD    VARCHAR2(255)  → password   (BCrypt 암호화 저장)
+ *   PASSWORD    VARCHAR2(255)  → password   (평문 저장)
  *   IS_ADMIN    CHAR(1)        → isAdmin    (Y/N)
  *   EMAIL       VARCHAR2(255)  → email      (UNIQUE)
  *   NICKNAME    NVARCHAR2(10)  → nickname

@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -38,7 +37,6 @@ class MemberServiceJUnit {
 	@Autowired
 	private MemberMapper memberMapper;
 
-	private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 	private MemberVO member;
 
 	@BeforeEach
@@ -93,13 +91,12 @@ class MemberServiceJUnit {
 		log.debug("doSave flag={}", flag);
 		assertEquals(1, flag);
 
-		//3. 저장 검증: isAdmin='N', password 는 원문이 아닌 BCrypt 로 저장됨
-		log.debug("3. 저장 검증: isAdmin='N', password 는 원문이 아닌 BCrypt 로 저장됨");
+		//3. 저장 검증: isAdmin='N', password 가 원문 그대로 저장됨(암호화 제거)
+		log.debug("3. 저장 검증: isAdmin='N', password 가 원문 그대로 저장됨(암호화 제거)");
 		MemberVO found = memberMapper.selectByEmail(emailParam);
 		assertNotNull(found);
 		assertEquals("N", found.getIsAdmin());
-		assertNotEquals("password123", found.getPassword());
-		assertTrue(encoder.matches("password123", found.getPassword()));
+		assertEquals("password123", found.getPassword());
 	}
 
 	//@Disabled
