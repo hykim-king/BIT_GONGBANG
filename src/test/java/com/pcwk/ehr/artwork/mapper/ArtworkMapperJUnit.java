@@ -2,11 +2,6 @@ package com.pcwk.ehr.artwork.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-<<<<<<< HEAD:src/test/java/com/pcwk/ehr/artwork/domain/ArtworkMapperJUnit.java
-
- 
-=======
->>>>>>> 7eda3ff0f84cc9ebcaaa171a9bced5e7e722b24b:src/test/java/com/pcwk/ehr/artwork/mapper/ArtworkMapperJUnit.java
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -20,22 +15,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-<<<<<<< HEAD:src/test/java/com/pcwk/ehr/artwork/domain/ArtworkMapperJUnit.java
- 
+
+import com.pcwk.ehr.artwork.domain.ArtworkVO;
 import com.pcwk.ehr.artworkentry.domain.ArtworkEntryVO;
 import com.pcwk.ehr.category.domain.CategoryVO;
 import com.pcwk.ehr.mapper.ArtworkEntryMapper;
-=======
-
-import com.pcwk.ehr.artwork.domain.ArtworkVO;
->>>>>>> 7eda3ff0f84cc9ebcaaa171a9bced5e7e722b24b:src/test/java/com/pcwk/ehr/artwork/mapper/ArtworkMapperJUnit.java
 import com.pcwk.ehr.mapper.ArtworkMapper;
 import com.pcwk.ehr.mapper.CategoryMapper;
 
 /**
  * artwork(작품 게시판) 매퍼 테스트 — CRUD + 조회수/완성전환/메인·추천·인기·검색.
  * 매번 같은 결과가 나오도록 각 테스트는 deleteAll 로 비우고 시작한다.
- * (artwork 는 아직 Service 가 없어 매퍼 테스트만 있다. Oracle 을 켜고 @Disabled 를 떼면 실행된다.)
+ * (Oracle 을 켜고 @Disabled 를 떼면 실행된다.)
  */
 @ExtendWith(SpringExtension.class)
 // @AfterAll 을 non-static 으로 쓰기 위해 인스턴스를 클래스당 1개로 (주입된 mapper 접근 목적)
@@ -50,32 +41,23 @@ class ArtworkMapperJUnit {
     @Autowired
     private ArtworkMapper artworkMapper;
 
-<<<<<<< HEAD:src/test/java/com/pcwk/ehr/artwork/domain/ArtworkMapperJUnit.java
     // selectCount 하이브리드 필터 검증용 (artwork_entry 존재 여부 확인)
     @Autowired
     private ArtworkEntryMapper artworkEntryMapper;
 
     // category FK 동적 확보용.
-    // TEST_CATEGORY_ID=1 하드코딩은 위험 : CategoryMapperTest 가 category 를 deleteAll() 하면
-    // 시퀀스(seq_category)는 되돌아가지 않아 category_id=1 이 영영 사라진다(ORA-02291 FK 위반).
+    // TEST_CATEGORY_ID 하드코딩은 위험 : CategoryMapperTest 가 category 를 deleteAll() 하면
+    // 시퀀스(seq_category)는 되돌아가지 않아 해당 ID 가 영영 사라진다(ORA-02291 FK 위반).
     // 그래서 매 테스트마다 존재하는 category 를 동적으로 조회해 쓰고, 없으면 새로 만든다.
     @Autowired
     private CategoryMapper categoryMapper;
 
     // 테스트용 FK (DB에 존재하는 값이어야 함)
-    private static final int    TEST_MEMBER_ID   = 1;
-    private static final String TEST_STATUS      = "N"; // 공개작업으로 등록 
+    private static final int    TEST_MEMBER_ID = 1;
+    private static final String TEST_STATUS    = "N"; // 공개작업으로 등록
 
     private ArtworkVO template;
     private int testCategoryId; // setUp()에서 동적으로 확보한 category FK (하드코딩 제거)
-=======
-    // 테스트용 FK (DB에 존재하는 값이어야 함)
-    private static final int    TEST_MEMBER_ID   = 1;
-    private static final int    TEST_CATEGORY_ID = 1;
-    private static final String TEST_STATUS      = "N"; // 공개작업으로 등록
-
-    private ArtworkVO template;
->>>>>>> 7eda3ff0f84cc9ebcaaa171a9bced5e7e722b24b:src/test/java/com/pcwk/ehr/artwork/mapper/ArtworkMapperJUnit.java
 
     @BeforeEach
     public void setUp() {
@@ -83,18 +65,13 @@ class ArtworkMapperJUnit {
         log.debug("*BeforeEach()*");
         log.debug("---------------------------");
 
-        // category FK 동적 확보 (하드코딩 1 대신 실제 존재하는 ID 사용)
+        // category FK 동적 확보 (하드코딩 대신 실제 존재하는 ID 사용)
         testCategoryId = resolveCategoryId();
 
         // 생성자 순서: artworkId, memberId, categoryId, isStatus,
         //             title, content, viewCount, regDt, modDt, compDt
-<<<<<<< HEAD:src/test/java/com/pcwk/ehr/artwork/domain/ArtworkMapperJUnit.java
         template = new ArtworkVO(0, TEST_MEMBER_ID, testCategoryId, TEST_STATUS,
                 "JUnit 테스트 작품", "JUnit 본문 내용", 0, null, null, null);
-=======
-        template = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, TEST_STATUS,
-                "JUnit 테스트 작품", "JUnit 본문", 0, null, null, null);
->>>>>>> 7eda3ff0f84cc9ebcaaa171a9bced5e7e722b24b:src/test/java/com/pcwk/ehr/artwork/mapper/ArtworkMapperJUnit.java
         assertNotNull(artworkMapper); // DI 주입 확인
     }
 
@@ -107,14 +84,12 @@ class ArtworkMapperJUnit {
         artworkMapper.deleteAll();
     }
 
-<<<<<<< HEAD:src/test/java/com/pcwk/ehr/artwork/domain/ArtworkMapperJUnit.java
     /**
      * 클래스의 모든 테스트가 끝난 뒤, 이 테스트가 남긴 artwork 데이터를 전부 정리.
-     * 대부분의 테스트 메서드는 artwork 를 등록만 하고 지우지 않아 행이 남는데,
      * artwork 는 category_id 를 FK 로 참조하므로 남아 있으면
      * 이후 CategoryMapperTest 의 DELETE FROM category(deleteAll)가
      * ORA-02292(child record found)로 실패한다.
-     * 여기서 artwork 를 먼저 비우면(artwork_entry 는 FK CASCADE 로 함께 삭제) 그 참조가 사라져 안전해진다.
+     * 여기서 artwork 를 비우면(artwork_entry 는 FK CASCADE 로 함께 삭제) 그 참조가 사라져 안전해진다.
      */
     @AfterAll
     public void afterAllCleanUp() {
@@ -141,8 +116,6 @@ class ArtworkMapperJUnit {
         return category.getCategoryId();
     }
 
-=======
->>>>>>> 7eda3ff0f84cc9ebcaaa171a9bced5e7e722b24b:src/test/java/com/pcwk/ehr/artwork/mapper/ArtworkMapperJUnit.java
     /** 방금 등록한(가장 최신) artwork_id 조회 헬퍼 (doRetrieve = artwork_id DESC 정렬) */
     private int getLatestId() {
         ArtworkVO param = new ArtworkVO();
@@ -170,9 +143,6 @@ class ArtworkMapperJUnit {
         log.debug("*doSave()*");
         log.debug("---------------------------");
         // 테스트는 항상 동일한 결과가 나와야 하므로(Test Isolation) 데이터를 초기화하고 시작
-        //1. 전체삭제
-        //2. 단건등록
-        //3. flag 검증
         log.debug("1. 전체삭제");
         artworkMapper.deleteAll();
 
@@ -191,9 +161,6 @@ class ArtworkMapperJUnit {
         log.debug("---------------------------");
         log.debug("*doRetrieve()*");
         log.debug("---------------------------");
-        //1. 전체삭제 후 0건 확인
-        //2. 단건등록
-        //3. 목록 조회 및 검증
         log.debug("1. 전체삭제 후 0건 확인");
         artworkMapper.deleteAll();
 
@@ -220,9 +187,6 @@ class ArtworkMapperJUnit {
         log.debug("---------------------------");
         log.debug("*doSelectOne()*");
         log.debug("---------------------------");
-        //1. 전체삭제
-        //2. 단건등록 후 최신 id 조회
-        //3. 상세 조회 및 비교
         log.debug("1. 전체삭제");
         artworkMapper.deleteAll();
         log.debug("2. 단건등록 후 최신 id 조회");
@@ -247,9 +211,6 @@ class ArtworkMapperJUnit {
         log.debug("---------------------------");
         log.debug("*doUpdate()*");
         log.debug("---------------------------");
-        //1. 전체삭제
-        //2. 단건등록 후 최신 id 조회
-        //3. 수정 및 결과 비교
         log.debug("1. 전체삭제");
         artworkMapper.deleteAll();
         log.debug("2. 단건등록 후 최신 id 조회");
@@ -277,9 +238,6 @@ class ArtworkMapperJUnit {
         log.debug("---------------------------");
         log.debug("*doDelete()*");
         log.debug("---------------------------");
-        //1. 전체삭제
-        //2. 단건등록 후 최신 id 조회
-        //3. 삭제 및 null 확인
         log.debug("1. 전체삭제");
         artworkMapper.deleteAll();
         log.debug("2. 단건등록 후 최신 id 조회");
@@ -303,9 +261,6 @@ class ArtworkMapperJUnit {
         log.debug("---------------------------");
         log.debug("*updateViewCount()*");
         log.debug("---------------------------");
-        //1. 전체삭제
-        //2. 단건등록(view_count=0) 후 최신 id 조회
-        //3. 조회수 증가 2회 검증
         log.debug("1. 전체삭제");
         artworkMapper.deleteAll();
         log.debug("2. 단건등록(view_count=0) 후 최신 id 조회");
@@ -338,9 +293,6 @@ class ArtworkMapperJUnit {
         log.debug("---------------------------");
         log.debug("*updateStatus()*");
         log.debug("---------------------------");
-        //1. 전체삭제
-        //2. 단건등록(TEST_STATUS='N') 후 최신 id 조회
-        //3. 완성 전환 및 검증
         log.debug("1. 전체삭제");
         artworkMapper.deleteAll();
         log.debug("2. 단건등록(TEST_STATUS='N') 후 최신 id 조회");
@@ -358,42 +310,18 @@ class ArtworkMapperJUnit {
         assertEquals("Y", outVO.getIsStatus());   // 완성 전환됨
         assertNotNull(outVO.getCompDt());          // 완성일 세팅됨
     }
-<<<<<<< HEAD:src/test/java/com/pcwk/ehr/artwork/domain/ArtworkMapperJUnit.java
-    
-    /** 8. 목록 총건수 (하이브리드 조건부: is_status='N' 이거나 작업일지 존재) */
-=======
 
-    /** 8. 목록 총건수 (is_status 조건부) */
->>>>>>> 7eda3ff0f84cc9ebcaaa171a9bced5e7e722b24b:src/test/java/com/pcwk/ehr/artwork/mapper/ArtworkMapperJUnit.java
+    /** 8. 목록 총건수 (하이브리드 조건부: is_status='N' 이거나 작업일지 존재) */
     //@Disabled
     @Test
     public void selectCount() {
         log.debug("---------------------------");
         log.debug("*selectCount()*");
         log.debug("---------------------------");
-<<<<<<< HEAD:src/test/java/com/pcwk/ehr/artwork/domain/ArtworkMapperJUnit.java
+        artworkMapper.deleteAll();
 
         // 0. 다른 테스트가 남긴 데이터와 섞이지 않도록 이 테스트 전용 마커로 제목을 구분
         String marker = "SELCNT_" + System.currentTimeMillis();
-=======
-        //1. 전체삭제 후 0건 확인
-        //2. 'N' 1건 등록
-        //3. 전체/완성 건수 비교
-        log.debug("1. 전체삭제 후 0건 확인");
-        artworkMapper.deleteAll();
-
-        ArtworkVO empty = new ArtworkVO();
-        int zeroCnt = artworkMapper.selectCount(empty);
-        assertEquals(0, zeroCnt);
-
-        log.debug("2. 'N' 1건 등록");
-        artworkMapper.doSave(template);      // 'N' 최소 1건 보장
-
-        log.debug("3. 전체/완성 건수 비교");
-        // 전체(공개작업 관점): isStatus 미설정 -> null
-        ArtworkVO all = new ArtworkVO();
-        int totalCnt = artworkMapper.selectCount(all);
->>>>>>> 7eda3ff0f84cc9ebcaaa171a9bced5e7e722b24b:src/test/java/com/pcwk/ehr/artwork/mapper/ArtworkMapperJUnit.java
 
         // 1. N상태 작품 등록 : 하이브리드 필터에서 무조건 포함 대상
         ArtworkVO working = new ArtworkVO(0, TEST_MEMBER_ID, testCategoryId, "N",
@@ -439,9 +367,6 @@ class ArtworkMapperJUnit {
         log.debug("---------------------------");
         log.debug("*selectMain()*");
         log.debug("---------------------------");
-        //1. 전체삭제
-        //2. 완성작 3건 등록
-        //3. selectMain 조회 및 검증
         log.debug("1. 전체삭제");
         artworkMapper.deleteAll();
         log.debug("2. 완성작 3건 등록");
@@ -474,9 +399,6 @@ class ArtworkMapperJUnit {
         log.debug("---------------------------");
         log.debug("*selectRecommend()*");
         log.debug("---------------------------");
-        //1. 전체삭제
-        //2. 완성작 3건 등록
-        //3. selectRecommend 조회 및 검증
         log.debug("1. 전체삭제");
         artworkMapper.deleteAll();
         log.debug("2. 완성작 3건 등록");
@@ -507,9 +429,6 @@ class ArtworkMapperJUnit {
         log.debug("---------------------------");
         log.debug("*selectPopular()*");
         log.debug("---------------------------");
-        //1. 전체삭제
-        //2. 완성작 3건 등록 (오늘 등록 → 기간 안에 포함)
-        //3. 최근 30일/7일 인기 조회 및 검증
         log.debug("1. 전체삭제");
         artworkMapper.deleteAll();
         log.debug("2. 완성작 3건 등록 (오늘 등록 → 기간 안에 포함)");
@@ -550,29 +469,17 @@ class ArtworkMapperJUnit {
         log.debug("---------------------------");
         log.debug("*search()*");
         log.debug("---------------------------");
-<<<<<<< HEAD:src/test/java/com/pcwk/ehr/artwork/domain/ArtworkMapperJUnit.java
-        ArtworkVO seed = new ArtworkVO(0, TEST_MEMBER_ID, testCategoryId, "Y",
-=======
-        //1. 전체삭제
-        //2. 검색 대상 완성작 1건 등록
-        //3. 제목검색/전체검색 검증
         log.debug("1. 전체삭제");
         artworkMapper.deleteAll();
         log.debug("2. 검색 대상 완성작 1건 등록");
-        ArtworkVO seed = new ArtworkVO(0, TEST_MEMBER_ID, TEST_CATEGORY_ID, "Y",
->>>>>>> 7eda3ff0f84cc9ebcaaa171a9bced5e7e722b24b:src/test/java/com/pcwk/ehr/artwork/mapper/ArtworkMapperJUnit.java
+        ArtworkVO seed = new ArtworkVO(0, TEST_MEMBER_ID, testCategoryId, "Y",
                 "검색전용제목ABC", "검색본문내용", 0, null, null, null);
         artworkMapper.doSave(seed);
 
         log.debug("3. 제목검색/전체검색 검증");
         // (1) 제목 검색 : searchDiv=1
-<<<<<<< HEAD:src/test/java/com/pcwk/ehr/artwork/domain/ArtworkMapperJUnit.java
         // search()는 ROW_NUMBER() 기반 페이징 쿼리라 pageNo/pageSize를 반드시 세팅해야 함
         // (미설정 시 기본값 0 -> rn BETWEEN 1 AND 0 이 되어 결과가 항상 0건 나옴)
-=======
-        // search 는 내부적으로 rn BETWEEN 페이징을 쓰므로 pageNo/pageSize 를 반드시 세팅해야 한다
-        // (안 하면 0/0 -> BETWEEN 1 AND 0 이 되어 결과가 항상 0건)
->>>>>>> 7eda3ff0f84cc9ebcaaa171a9bced5e7e722b24b:src/test/java/com/pcwk/ehr/artwork/mapper/ArtworkMapperJUnit.java
         ArtworkVO p1 = new ArtworkVO();
         p1.setSearchDiv("1");
         p1.setSearchWord("검색전용제목");
@@ -594,19 +501,15 @@ class ArtworkMapperJUnit {
         log.debug("전체검색 size={}", byAll.size());
         assertTrue(byAll.size() >= 1);
     }
-<<<<<<< HEAD:src/test/java/com/pcwk/ehr/artwork/domain/ArtworkMapperJUnit.java
-    
+
+    /** 13. 전체삭제 (테스트 데이터 정리용) */
     //@Disabled
     @Test
-    public void deleteAll() {     
+    public void deleteAll() {
         log.debug("---------------------------");
-        log.debug("* deleteAll()*");
+        log.debug("*deleteAll()*");
         log.debug("---------------------------");
         artworkMapper.deleteAll();
     }
-    
-   
-=======
 
->>>>>>> 7eda3ff0f84cc9ebcaaa171a9bced5e7e722b24b:src/test/java/com/pcwk/ehr/artwork/mapper/ArtworkMapperJUnit.java
 }
