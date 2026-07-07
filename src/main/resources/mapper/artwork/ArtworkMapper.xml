@@ -5,35 +5,52 @@
 
 	<!-- ===== 목록 : doRetrieve =====
 	     is_status 조건부:
-	       완성게시판   -> isStatus='Y' 전달 (is_status='Y' 만)
-	       공개작업게시판 -> isStatus=null/'' 전달 (전체 Y+N 노출) -->
+	       완성게시판   -> isStatus='Y' 전달                 -> is_status='Y' 만
+	       공개작업게시판 -> isStatus=null/'' 전달 (하이브리드) -> is_status='N' 이거나
+	                                                          artwork_entry(작업일지)가 하나라도 있으면 노출
+	         (완성 전환되어도 작업일지가 있으면 공개작업 목록에서 계속 보이게 하기 위함.
+	          작업일지 없이 바로 완성으로 등록된 작품은 공개작업 목록에서 제외됨) -->
 	<select id="doRetrieve" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
 	        resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
-		SELECT artwork_id, member_id, category_id, is_status, title, content,
-		       view_count, reg_dt, mod_dt, comp_dt
-		  FROM artwork
+		SELECT a.artwork_id, a.member_id, a.category_id, a.is_status, a.title, a.content,
+		       a.view_count, a.reg_dt, a.mod_dt, a.comp_dt
+		  FROM artwork a
 		<where>
-			<if test="isStatus != null and isStatus != ''">
-				AND is_status = #{isStatus}
-			</if>
+			<choose>
+				<!-- 완성게시판 : isStatus 지정 시 해당 상태만 -->
+				<when test="isStatus != null and isStatus != ''">
+					AND a.is_status = #{isStatus}
+				</when>
+				<!-- 공개작업게시판 : isStatus 미지정 시 하이브리드 필터 적용 -->
+				<otherwise>
+					AND ( a.is_status = 'N'
+					   OR EXISTS (SELECT 1 FROM artwork_entry e WHERE e.artwork_id = a.artwork_id) )
+				</otherwise>
+			</choose>
 			<if test="searchWord != null and searchWord != ''">
-				AND title LIKE '%' || #{searchWord} || '%'
+				AND a.title LIKE '%' || #{searchWord} || '%'
 			</if>
 		</where>
-		 ORDER BY artwork_id DESC
+		 ORDER BY a.artwork_id DESC
 	</select>
 
-	<!-- ===== 목록 총건수 : selectCount (페이징용, 동일 조건부) ===== -->
+	<!-- ===== 목록 총건수 : selectCount (페이징용, doRetrieve 와 동일한 하이브리드 조건부) ===== -->
 	<select id="selectCount" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
 	        resultType="java.lang.Integer">
 		SELECT COUNT(*)
-		  FROM artwork
+		  FROM artwork a
 		<where>
-			<if test="isStatus != null and isStatus != ''">
-				AND is_status = #{isStatus}
-			</if>
+			<choose>
+				<when test="isStatus != null and isStatus != ''">
+					AND a.is_status = #{isStatus}
+				</when>
+				<otherwise>
+					AND ( a.is_status = 'N'
+					   OR EXISTS (SELECT 1 FROM artwork_entry e WHERE e.artwork_id = a.artwork_id) )
+				</otherwise>
+			</choose>
 			<if test="searchWord != null and searchWord != ''">
-				AND title LIKE '%' || #{searchWord} || '%'
+				AND a.title LIKE '%' || #{searchWord} || '%'
 			</if>
 		</where>
 	</select>
@@ -47,7 +64,10 @@
 		 WHERE artwork_id = #{artworkId}
 	</select>
 
-	<!-- ===== 등록 : doSave ===== -->
+	<!-- ===== 등록 : doSave =====
+	     comp_dt 는 is_status 로 분기:
+	       완성으로 바로 등록('Y') -> comp_dt = SYSDATE (완성일 자동 세팅)
+	       공개작업으로 등록('N')  -> comp_dt = NULL (미완성이라 완성일 없음) -->
 	<insert id="doSave" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO">
 		<!-- 시퀀스에서 artworkId를 받아 다음번호로 기입해두기 -->
 		<selectKey keyProperty="artworkId" resultType="int" order="BEFORE">
@@ -58,9 +78,13 @@
 			artwork_id, member_id, category_id, is_status,
 			title, content, view_count, reg_dt, mod_dt, comp_dt
 		) VALUES (
-		<!-- #{compDt,jdbcType=DATE} : 첫글작성 Null입력시 Oracle에게 Null값이 DATE 타입임을 알려주기 -->
 			#{artworkId}, #{memberId}, #{categoryId}, #{isStatus},
-			#{title}, #{content}, 0, SYSDATE, NULL, #{compDt,jdbcType=DATE}
+			#{title}, #{content}, 0, SYSDATE, NULL,
+			<choose>
+				<when test='isStatus == "Y"'>SYSDATE</when>
+				<!-- #{compDt,jdbcType=DATE} : Null입력시 Oracle에게 Null값이 DATE 타입임을 알려주기 -->
+				<otherwise>#{compDt,jdbcType=DATE}</otherwise>
+			</choose>
 		)
 	</insert>
 

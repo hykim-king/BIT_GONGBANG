@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pcwk.ehr.mapper.ArtworkEntryMapper">
+ 
+	<!-- =========================================================
+	     목록 : doRetrieve
+	     특정 작품(artwork_id)의 작업일지 목록.
+	     정렬: 최신 위 → 오래된 아래 (artwork_entry DESC)
+	     ========================================================= -->
+	<select id="doRetrieve" parameterType="com.pcwk.ehr.artworkentry.domain.ArtworkEntryVO"
+	        resultType="com.pcwk.ehr.artworkentry.domain.ArtworkEntryVO">
+		SELECT artwork_entry, artwork_id, content, reg_dt, mod_dt
+		  FROM artwork_entry
+		 WHERE artwork_id = #{artworkId}
+		 ORDER BY artwork_entry DESC
+	</select>
+ 
+	<!-- =========================================================
+	     상세 : doSelectOne
+	     작업일지 PK(artwork_entry)로 단건 조회 (수정/삭제 전 확인)
+	     ========================================================= -->
+	<select id="doSelectOne" parameterType="com.pcwk.ehr.artworkentry.domain.ArtworkEntryVO"
+	        resultType="com.pcwk.ehr.artworkentry.domain.ArtworkEntryVO">
+		SELECT artwork_entry, artwork_id, content, reg_dt, mod_dt
+		  FROM artwork_entry
+		 WHERE artwork_entry = #{artworkEntry}
+	</select>
+ 
+	<!-- =========================================================
+	     등록 : doSave
+	     - selectKey(order=BEFORE) 로 PK(artwork_entry)를 먼저 발급해 VO 에 채움
+	       → 등록 후 param.artworkEntry 로 새 id 사용 가능
+	     - reg_dt = SYSDATE, mod_dt = NULL(수정 전)
+	     - content 는 NOT NULL 이므로 반드시 값이 있어야 함
+	     ========================================================= -->
+	<insert id="doSave" parameterType="com.pcwk.ehr.artworkentry.domain.ArtworkEntryVO">
+		<selectKey keyProperty="artworkEntry" resultType="int" order="BEFORE">
+			SELECT seq_artwork_entry.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO artwork_entry (
+			artwork_entry, artwork_id, content, reg_dt, mod_dt
+		) VALUES (
+			#{artworkEntry}, #{artworkId}, #{content}, SYSDATE, NULL
+		)
+	</insert>
+ 
+	<!-- =========================================================
+	     수정 : doUpdate
+	     내용(content) 변경 + 수정일(mod_dt) 갱신
+	     ========================================================= -->
+	<update id="doUpdate" parameterType="com.pcwk.ehr.artworkentry.domain.ArtworkEntryVO">
+		UPDATE artwork_entry
+		   SET content = #{content},
+		       mod_dt  = SYSDATE
+		 WHERE artwork_entry = #{artworkEntry}
+	</update>
+ 
+	<!-- =========================================================
+	     삭제 : doDelete (단건)
+	     ※ 상위 artwork 삭제 시엔 FK CASCADE 로 자동 삭제되므로
+	       이 메서드는 개별 작업일지 삭제용.
+	     ========================================================= -->
+	<delete id="doDelete" parameterType="com.pcwk.ehr.artworkentry.domain.ArtworkEntryVO">
+		DELETE FROM artwork_entry
+		 WHERE artwork_entry = #{artworkEntry}
+	</delete>
+ 
+	<!-- =========================================================
+	     전체삭제 : deleteAll (테스트 전용)
+	     릴리즈 시 팀회의 후 제거 예정
+	     ========================================================= -->
+	<delete id="deleteAll">
+		DELETE FROM artwork_entry
+	</delete>
+ 
+</mapper>
