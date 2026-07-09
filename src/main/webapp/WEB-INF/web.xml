@@ -29,7 +29,17 @@
 		<servlet-name>appServlet</servlet-name>
 		<url-pattern>*.do</url-pattern>
 	</servlet-mapping>
-	
+
+	<!-- artwork/artworkEntry 모듈은 .do 미사용 URL(/artwork/complete/list 등)이라 별도 매핑 필요 -->
+	<servlet-mapping>
+		<servlet-name>appServlet</servlet-name>
+		<url-pattern>/artwork/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>appServlet</servlet-name>
+		<url-pattern>/artworkEntry/*</url-pattern>
+	</servlet-mapping>
+
 	<!-- UTF-8 -->
 	<filter>
 		<filter-name>encodingFilter</filter-name>

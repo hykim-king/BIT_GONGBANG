@@ -22,7 +22,10 @@
 	</beans:bean>
 	
 	<!-- @ResponseBody JSON → Gson (jackson 미사용, classpath 에 gson 만 등록) -->
+	<!-- path-matching: /artwork/*, /artworkEntry/* 경로 매핑(web.xml)에서도 컨트롤러의
+	     전체 경로(@RequestMapping /artwork/...)로 핸들러를 찾도록 full path 사용 -->
 	<annotation-driven>
+		<path-matching path-helper="urlPathHelper" />
 		<message-converters>
 			<beans:bean class="org.springframework.http.converter.json.GsonHttpMessageConverter" />
 			<beans:bean class="org.springframework.http.converter.StringHttpMessageConverter">
@@ -38,6 +41,10 @@
 			<beans:bean class="org.springframework.http.converter.ResourceHttpMessageConverter" />
 		</message-converters>
 	</annotation-driven>
+
+	<beans:bean id="urlPathHelper" class="org.springframework.web.util.UrlPathHelper">
+		<beans:property name="alwaysUseFullPath" value="true" />
+	</beans:bean>
 
 	<interceptors>
 		<interceptor>
