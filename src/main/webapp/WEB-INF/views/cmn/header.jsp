@@ -20,6 +20,8 @@
 <link rel="stylesheet" href="${ctx}/resources/css/common.css">
 <script src="${ctx}/resources/assets/js/jquery-4.0.0.js"></script>
 <script src="${ctx}/resources/js/common.js"></script>
+<script src="${ctx}/resources/js/comment.js"></script>
+<script src="${ctx}/resources/js/upload.js"></script>
 </head>
 <body data-ctx="${ctx}">
 

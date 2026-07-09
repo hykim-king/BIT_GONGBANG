@@ -1,0 +1,141 @@
+/* ============================================================================
+ * CC-CMT-01 댓글 부분 컴포넌트 — .comment-box 자동 마운트
+ * 백엔드 계약(CommentController, 전부 POST + MessageVO):
+ *  - /comment/doRetrieve.do   {targetType,targetId}            → data=List (comment_id DESC)
+ *  - /comment/countByTarget.do{targetType,targetId}            → data=Integer
+ *  - /comment/doSave.do       {targetType,targetId,content}    → 200/400/401
+ *  - /comment/doUpdate.do     {commentId,content}              → 200/400/401
+ *  - /comment/doDelete.do     {commentId}                      → 200/400/401
+ *  본인 판정: 목록 항목의 memberId === data-login-member-id
+ *  주의: 비로그인 세션 만료 시 LoginInterceptor 가 302(HTML)를 주므로 .fail 로 떨어짐.
+ * ==========================================================================*/
+$(function () {
+	'use strict';
+
+	var ctx = $('body').data('ctx') || '';
+	var esc = (window.bitda && window.bitda.esc) || function (s) { return String(s == null ? '' : s); };
+
+	function fmtDt(s) {
+		/* "2026-07-09 17:57:14.0" / "2026-07-09 17:57:14" → "2026-07-09 17:57" */
+		return s ? String(s).substring(0, 16) : '';
+	}
+
+	function itemHtml(c, loginMemberId) {
+		var mine = loginMemberId !== '' && String(c.memberId) === String(loginMemberId);
+		var html = '<li class="cmt-item" data-comment-id="' + c.commentId + '">';
+		html += '<div class="cmt-meta"><strong class="cmt-nick">' + esc(c.nickname) + '</strong>';
+		html += '<span class="cmt-dt">' + fmtDt(c.regDt) + (c.modDt ? ' (수정됨)' : '') + '</span>';
+		if (mine) {
+			html += '<span class="cmt-btns"><a class="cmt-edit">수정</a> <a class="cmt-del">삭제</a></span>';
+		}
+		html += '</div>';
+		html += '<p class="cmt-content">' + esc(c.content) + '</p>';
+		html += '<div class="cmt-edit-area"></div>';
+		html += '</li>';
+		return html;
+	}
+
+	function mount($box) {
+		var targetType = $box.data('target-type');
+		var targetId = $box.data('target-id');
+		var loginMemberId = String($box.data('login-member-id') === undefined ? '' : $box.data('login-member-id'));
+
+		function load() {
+			$.post(ctx + '/comment/doRetrieve.do', { targetType: targetType, targetId: targetId }, function (res) {
+				if (res.code !== '200') { return; }
+				var list = res.data || [];
+				$box.find('.cmt-count').text('(' + list.length + ')');
+				var html = '';
+				for (var i = 0; i < list.length; i++) {
+					html += itemHtml(list[i], loginMemberId);
+				}
+				$box.find('.cmt-list').html(html || '<li class="cmt-empty">첫 댓글을 남겨보세요.</li>');
+			}, 'json');
+		}
+
+		/* 입력 영역: 로그인 시 폼, 비로그인 시 안내 */
+		if (loginMemberId !== '') {
+			$box.find('.cmt-form-area').html(
+				'<form class="cmt-form" method="post">' +
+				'<div class="row"><input type="text" class="text-input cmt-input" maxlength="1000" placeholder="댓글을 입력하세요 (1~1000자)">' +
+				'<button type="submit" class="btn small">등록</button></div>' +
+				'</form>');
+		} else {
+			$box.find('.cmt-form-area').html('<p class="hint">로그인 후 댓글을 작성할 수 있습니다.</p>');
+		}
+
+		/* 등록 */
+		$box.on('submit', '.cmt-form', function (e) {
+			e.preventDefault();
+			var content = $box.find('.cmt-input').val().trim();
+			if (!content) { alert('댓글 내용을 입력하세요.'); return; }
+			$.post(ctx + '/comment/doSave.do', { targetType: targetType, targetId: targetId, content: content }, function (res) {
+				if (res.code === '200') {
+					$box.find('.cmt-input').val('');
+					load();
+				} else if (res.code === '401') {
+					alert('로그인이 필요합니다.');
+				} else {
+					alert(res.message || '댓글 등록에 실패했습니다.');
+				}
+			}, 'json').fail(function () {
+				alert('요청 처리 중 오류가 발생했습니다. 로그인 상태를 확인하세요.');
+			});
+		});
+
+		/* 수정 — 인라인 편집 폼 전환 */
+		$box.on('click', '.cmt-edit', function () {
+			var $item = $(this).closest('.cmt-item');
+			if ($item.find('.cmt-edit-form').length) { return; }
+			var cur = $item.find('.cmt-content').text();
+			$item.find('.cmt-content').hide();
+			$item.find('.cmt-edit-area').html(
+				'<form class="cmt-edit-form" method="post">' +
+				'<div class="row"><input type="text" class="text-input cmt-edit-input" maxlength="1000">' +
+				'<button type="submit" class="btn small">저장</button>' +
+				'<button type="button" class="btn ghost small cmt-edit-cancel">취소</button></div>' +
+				'</form>');
+			$item.find('.cmt-edit-input').val(cur).focus();
+		});
+		$box.on('click', '.cmt-edit-cancel', function () {
+			var $item = $(this).closest('.cmt-item');
+			$item.find('.cmt-edit-area').empty();
+			$item.find('.cmt-content').show();
+		});
+		$box.on('submit', '.cmt-edit-form', function (e) {
+			e.preventDefault();
+			var $item = $(this).closest('.cmt-item');
+			var commentId = $item.data('comment-id');
+			var content = $item.find('.cmt-edit-input').val().trim();
+			if (!content) { alert('댓글 내용을 입력하세요.'); return; }
+			$.post(ctx + '/comment/doUpdate.do', { commentId: commentId, content: content }, function (res) {
+				if (res.code === '200') {
+					load();
+				} else {
+					alert(res.message || '댓글 수정에 실패했습니다.');
+				}
+			}, 'json').fail(function () {
+				alert('요청 처리 중 오류가 발생했습니다.');
+			});
+		});
+
+		/* 삭제 */
+		$box.on('click', '.cmt-del', function () {
+			if (!confirm('댓글을 삭제하시겠습니까?')) { return; }
+			var commentId = $(this).closest('.cmt-item').data('comment-id');
+			$.post(ctx + '/comment/doDelete.do', { commentId: commentId }, function (res) {
+				if (res.code === '200') {
+					load();
+				} else {
+					alert(res.message || '댓글 삭제에 실패했습니다.');
+				}
+			}, 'json').fail(function () {
+				alert('요청 처리 중 오류가 발생했습니다.');
+			});
+		});
+
+		load();
+	}
+
+	$('.comment-box').each(function () { mount($(this)); });
+});

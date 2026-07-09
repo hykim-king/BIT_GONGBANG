@@ -40,6 +40,27 @@
 		<url-pattern>/artworkEntry/*</url-pattern>
 	</servlet-mapping>
 
+	<!-- 한글 윈도우 Tomcat 정적 리소스 인코딩 보정:
+	     CharacterEncodingFilter(forceEncoding=true)와 결합 시 DefaultServlet이 .js/.css를
+	     JVM 기본 인코딩(MS949)으로 읽어 한글 리터럴이 깨지는 문제 → fileEncoding=UTF-8 고정 -->
+	<servlet>
+		<servlet-name>default</servlet-name>
+		<servlet-class>org.apache.catalina.servlets.DefaultServlet</servlet-class>
+		<init-param>
+			<param-name>fileEncoding</param-name>
+			<param-value>UTF-8</param-value>
+		</init-param>
+		<init-param>
+			<param-name>listings</param-name>
+			<param-value>false</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+
 	<!-- UTF-8 -->
 	<filter>
 		<filter-name>encodingFilter</filter-name>
