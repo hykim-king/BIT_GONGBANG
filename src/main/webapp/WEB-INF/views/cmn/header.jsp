@@ -23,8 +23,9 @@
 <script src="${ctx}/resources/js/comment.js"></script>
 <script src="${ctx}/resources/js/upload.js"></script>
 <script src="${ctx}/resources/js/feed.js"></script>
+<script src="${ctx}/resources/js/like.js"></script>
 </head>
-<body data-ctx="${ctx}">
+<body data-ctx="${ctx}" data-login-member-id="${empty sessionScope.loginMember ? '' : sessionScope.loginMember.memberId}">
 
 <%-- ==================== 상단바 ==================== --%>
 <header class="topbar">

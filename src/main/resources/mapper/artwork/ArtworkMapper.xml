@@ -55,13 +55,21 @@
 		</where>
 	</select>
 
-	<!-- ===== 상세 : doSelectOne ===== -->
+	<!-- ===== 상세 : doSelectOne =====
+	     CC-CPL-02/CC-WRK-02 보강: member/category JOIN + like_count 집계 추가
+	     (작성자 닉네임 / 카테고리명 / 작품 좋아요수 표시용) -->
 	<select id="doSelectOne" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
 	        resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
-		SELECT artwork_id, member_id, category_id, is_status, title, content,
-		       view_count, reg_dt, mod_dt, comp_dt
-		  FROM artwork
-		 WHERE artwork_id = #{artworkId}
+		SELECT a.artwork_id, a.member_id, a.category_id, a.is_status, a.title, a.content,
+		       a.view_count, a.reg_dt, a.mod_dt, a.comp_dt,
+		       m.nickname,
+		       c.category_nm,
+		       (SELECT COUNT(*) FROM board_like l
+		         WHERE l.target_type = 'ARTWORK' AND l.target_id = a.artwork_id) AS like_count
+		  FROM artwork a
+		  JOIN member   m ON a.member_id   = m.member_id
+		  JOIN category c ON a.category_id = c.category_id
+		 WHERE a.artwork_id = #{artworkId}
 	</select>
 
 	<!-- ===== 등록 : doSave =====
@@ -88,11 +96,15 @@
 		)
 	</insert>
 
-	<!-- ===== 수정 : doUpdate ===== -->
+	<!-- ===== 수정 : doUpdate =====
+	     CC-CPL-02/CC-ART-02 보강: category_id 도 갱신(수정 화면 카테고리 변경 반영) -->
 	<update id="doUpdate" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO">
 		UPDATE artwork
 		   SET title    = #{title},
 		       content  = #{content},
+		<if test="categoryId != 0">
+		       category_id = #{categoryId},
+		</if>
 		       mod_dt   = SYSDATE
 		 WHERE artwork_id = #{artworkId}
 	</update>
@@ -230,56 +242,25 @@
 	
 	<!-- ===== 통합검색 : search (페이징) ==== -->
     <!-- searchDiv: 1=제목, 2=내용, 3=작성자(nickname), 4=카테고리, 그외=전체 -->
-	<select id="search" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
-	        resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
-		SELECT * FROM (
-			SELECT a.artwork_id, a.member_id, a.category_id, a.is_status,
-			       a.title, a.content, a.view_count, a.reg_dt, a.mod_dt, a.comp_dt,
-			       m.nickname,
-			       c.category_nm,
-			       (SELECT COUNT(*) FROM board_like l
-			         WHERE l.target_type = 'ARTWORK' AND l.target_id = a.artwork_id) AS like_count,
-			       ROW_NUMBER() OVER (ORDER BY a.artwork_id DESC) AS rn
-			  FROM artwork a
-			  JOIN member   m ON a.member_id   = m.member_id
-			  JOIN category c ON a.category_id = c.category_id
-			<where>
-				<if test="searchWord != null and searchWord != ''">
-					<choose>
-						<when test='searchDiv == "1"'>
-							AND a.title LIKE '%' || #{searchWord} || '%'
-						</when>
-						<when test='searchDiv == "2"'>
-							AND a.content LIKE '%' || #{searchWord} || '%'
-						</when>
-						<when test='searchDiv == "3"'>
-							AND m.nickname LIKE '%' || #{searchWord} || '%'
-						</when>
-						<when test='searchDiv == "4"'>
-							AND c.category_nm LIKE '%' || #{searchWord} || '%'
-						</when>
-						<otherwise>
-							AND ( a.title       LIKE '%' || #{searchWord} || '%'
-							   OR a.content     LIKE '%' || #{searchWord} || '%'
-							   OR m.nickname    LIKE '%' || #{searchWord} || '%'
-							   OR c.category_nm LIKE '%' || #{searchWord} || '%' )
-						</otherwise>
-					</choose>
-				</if>
-			</where>
-		)
-		WHERE rn BETWEEN ((#{pageNo} - 1) * #{pageSize} + 1) AND (#{pageNo} * #{pageSize})
-		ORDER BY rn
-	</select>
-
-	<!-- ===== 통합검색 건수 : searchCount ===== -->
-	<select id="searchCount" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
-	        resultType="java.lang.Integer">
-		SELECT COUNT(*)
-		  FROM artwork a
-		  JOIN member   m ON a.member_id   = m.member_id
-		  JOIN category c ON a.category_id = c.category_id
+    <!-- 게시판 분기(CC-CPL-01/CC-WRK-01 보강):
+           isStatus='Y' -> 완성 게시판(완성작만)
+           isStatus='N' -> 공개작업 게시판(하이브리드: N 이거나 작업일지 존재)
+           미지정       -> 상태 무필터(메인 통합검색 기존 동작 유지)
+         categoryId != 0 -> 카테고리 AND 필터(작가/제목 검색과 결합) -->
+	<sql id="searchWhere">
 		<where>
+			<choose>
+				<when test='isStatus == "Y"'>
+					AND a.is_status = 'Y'
+				</when>
+				<when test='isStatus == "N"'>
+					AND ( a.is_status = 'N'
+					   OR EXISTS (SELECT 1 FROM artwork_entry e WHERE e.artwork_id = a.artwork_id) )
+				</when>
+			</choose>
+			<if test="categoryId != 0">
+				AND a.category_id = #{categoryId}
+			</if>
 			<if test="searchWord != null and searchWord != ''">
 				<choose>
 					<when test='searchDiv == "1"'>
@@ -303,6 +284,30 @@
 				</choose>
 			</if>
 		</where>
+	</sql>
+
+	<select id="search" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
+	        resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
+		SELECT * FROM (
+			SELECT <include refid="cardColumns"/>,
+			       ROW_NUMBER() OVER (ORDER BY a.artwork_id DESC) AS rn
+			  FROM artwork a
+			  JOIN member   m ON a.member_id   = m.member_id
+			  JOIN category c ON a.category_id = c.category_id
+			<include refid="searchWhere"/>
+		)
+		WHERE rn BETWEEN ((#{pageNo} - 1) * #{pageSize} + 1) AND (#{pageNo} * #{pageSize})
+		ORDER BY rn
+	</select>
+
+	<!-- ===== 통합검색 건수 : searchCount (search 와 동일 조건) ===== -->
+	<select id="searchCount" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
+	        resultType="java.lang.Integer">
+		SELECT COUNT(*)
+		  FROM artwork a
+		  JOIN member   m ON a.member_id   = m.member_id
+		  JOIN category c ON a.category_id = c.category_id
+		<include refid="searchWhere"/>
 	</select>
 
 	<!-- ===== 테이블삭제 : deleteAll (테스트 데이터 삭제용) ===== -->

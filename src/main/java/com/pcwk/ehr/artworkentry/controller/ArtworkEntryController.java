@@ -72,9 +72,11 @@ public class ArtworkEntryController {
 			return "redirect:/artwork/working/view?artworkId=" + param.getArtworkId();
 		}
 
-		artworkEntryService.doSave(param); // 작업일지 등록 위임
+		artworkEntryService.doSave(param); // 작업일지 등록 위임 (selectKey → param.artworkEntry 채워짐)
 
-		return "redirect:/artwork/working/view?artworkId=" + param.getArtworkId();
+		// newEntryId: 등록 폼의 지연 이미지 업로드(targetType=ARTWORK_ENTRY) 오케스트레이션용
+		return "redirect:/artwork/working/view?artworkId=" + param.getArtworkId()
+				+ "&newEntryId=" + param.getArtworkEntry();
 	}
 
 	/**

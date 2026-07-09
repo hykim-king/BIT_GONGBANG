@@ -63,6 +63,16 @@ public class ArtworkService {
 		return artworkMapper.selectCount(param);
 	}
 
+	/** 게시판 목록/검색 (CC-CPL-01/CC-WRK-01): isStatus 'Y'완성/'N'하이브리드 + categoryId/searchDiv/searchWord + 페이징 */
+	public List<ArtworkVO> search(ArtworkVO param) {
+		return artworkMapper.search(param);
+	}
+
+	/** 게시판 목록/검색 총건수 (search 와 동일 조건) */
+	public Integer searchCount(ArtworkVO param) {
+		return artworkMapper.searchCount(param);
+	}
+
 	/** 마이페이지 탭: 본인 작품 목록 (memberId 필수, isStatus 'Y'완성/'N'공개) — CC-USR-03 */
 	public List<ArtworkVO> selectByMember(ArtworkVO param) {
 		return artworkMapper.selectByMember(param);

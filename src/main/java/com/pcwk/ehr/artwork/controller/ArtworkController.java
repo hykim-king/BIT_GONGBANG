@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.pcwk.ehr.artwork.domain.ArtworkVO;
 import com.pcwk.ehr.artwork.service.ArtworkService;
+import com.pcwk.ehr.cmn.PageUtil;
 import com.pcwk.ehr.cmn.SessionConst;
 import com.pcwk.ehr.member.domain.MemberVO;
  
@@ -57,31 +58,34 @@ public class ArtworkController {
  
 	/**
 	 * 완성작 목록 (CC-CPL-01).
-	 * isStatus='Y' 로 강제 → 완성작만 조회. 검색/페이징은 param(DTO 상속)으로 전달.
+	 * isStatus='Y' 강제 + search/searchCount 배선(검색 이원화: searchDiv/searchWord +
+	 * categoryId AND 결합, ROW_NUMBER 페이징). PageUtil 로 페이지 블록 계산.
 	 */
 	@GetMapping("/complete/list")
 	public String completeList(@ModelAttribute ArtworkVO param, Model model) {
 		log.debug("completeList param: " + param);
- 
+
 		param.setIsStatus("Y");                              // 완성작만
-		List<ArtworkVO> list = artworkService.doRetrieve(param);   // 목록
-		int totalCnt = artworkService.selectCount(param);          // 총건수(페이징)
- 
+		normalizePaging(param);
+		List<ArtworkVO> list = artworkService.search(param);
+		Integer totalCnt = artworkService.searchCount(param);
+
 		model.addAttribute("list", list);
-		model.addAttribute("totalCnt", totalCnt);
-		return "artwork/complete/list";                     
+		model.addAttribute("totalCnt", totalCnt == null ? 0 : totalCnt);
+		model.addAttribute("page", new PageUtil(param.getPageNo(), param.getPageSize(), totalCnt == null ? 0 : totalCnt));
+		return "artwork/complete/list";
 	}
- 
+
 	/**
 	 * 완성작 상세 (CC-CPL-02).
-	 * 서비스 doSelectOne 내부에서 조회수 +1 후 작품을 반환.
-	 * (완성게시판 상세는 작품만. 작업일지는 공개작업 상세 전용)
+	 * 팀 결정: 공개작을 거쳐온 작품은 작업일지 타임라인을 완성 상세에도 인라인 표시
+	 * (일차별 좋아요·댓글 포함, 공개 상세와 동일 포맷) → viewWithEntry 재사용.
 	 */
 	@GetMapping("/complete/view")
 	public String completeView(ArtworkVO param, Model model) {
 		log.debug("completeView param: " + param);
- 
-		ArtworkVO outVO = artworkService.doSelectOne(param); // 조회수+1 + 작품 조회
+
+		ArtworkVO outVO = artworkService.viewWithEntry(param); // 조회수+1 + 작품 + 작업일지
 		model.addAttribute("vo", outVO);
 		return "artwork/complete/view";
 	}
@@ -144,13 +148,16 @@ public class ArtworkController {
 	@GetMapping("/working/list")
 	public String workingList(@ModelAttribute ArtworkVO param, Model model) {
 		log.debug("workingList param: " + param);
- 
-		// isStatus 미설정 → Mapper 의 하이브리드 필터(N OR 작업일지 존재)로 조회
-		List<ArtworkVO> list = artworkService.doRetrieve(param);
-		int totalCnt = artworkService.selectCount(param);
- 
+
+		// isStatus='N' → search 의 하이브리드 필터(N OR 작업일지 존재) 분기
+		param.setIsStatus("N");
+		normalizePaging(param);
+		List<ArtworkVO> list = artworkService.search(param);
+		Integer totalCnt = artworkService.searchCount(param);
+
 		model.addAttribute("list", list);
-		model.addAttribute("totalCnt", totalCnt);
+		model.addAttribute("totalCnt", totalCnt == null ? 0 : totalCnt);
+		model.addAttribute("page", new PageUtil(param.getPageNo(), param.getPageSize(), totalCnt == null ? 0 : totalCnt));
 		return "artwork/working/list";
 	}
  
@@ -248,6 +255,19 @@ public class ArtworkController {
 			return "redirect:" + viewUrl(isStatus, param.getArtworkId());
 		}
 		return "redirect:" + listUrl(isStatus);                      // is_status 에 맞는 게시판 목록으로 이동
+	}
+
+	/** 목록 페이징 방어값 (pageNo>=1, pageSize 기본 12·상한 48) */
+	private void normalizePaging(ArtworkVO param) {
+		if (param.getPageNo() <= 0) {
+			param.setPageNo(1);
+		}
+		if (param.getPageSize() <= 0) {
+			param.setPageSize(12);
+		}
+		if (param.getPageSize() > 48) {
+			param.setPageSize(48);
+		}
 	}
 
 	/** is_status='Y' → 완성 상세, 그 외('N') → 공개작업 상세 */
