@@ -3,7 +3,6 @@ package com.pcwk.ehr.main.service;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
-import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,9 +18,10 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import com.pcwk.ehr.artwork.domain.ArtworkVO;
 
 /**
- * main 서비스(MainService) 테스트 — 메인화면 추천/인기/최신 + 검색.
+ * main 서비스(MainService) 테스트 — 메인 홈 피드/명예의전당 피드 + 검색.
+ * (2단계 개정: 3섹션 구조 → 단일 인기 피드(CC-MAIN-01) + 명예의전당(CC-MAIN-02))
  * main 은 자체 매퍼가 없어(ArtworkMapper 재사용) 서비스만 테스트한다.
- * 읽기 전용이라, 조회가 예외 없이 not-null 목록을 주고 섹션 상한(8) 이내인지만 확인한다.
+ * 읽기 전용이라, 조회가 예외 없이 not-null 목록을 주고 페이지 상한 이내인지만 확인한다.
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations = {
@@ -31,8 +31,8 @@ class MainServiceJUnit {
 
     private static final Logger log = LogManager.getLogger(MainServiceJUnit.class);
 
-    // 메인 섹션 상한 (MainService.MAIN_SECTION_SIZE 와 동일)
-    private static final int MAIN_SECTION_SIZE = 8;
+    // 피드 페이지 크기 (index/hall 첫 페이지와 동일)
+    private static final int FEED_PAGE_SIZE = 12;
     // DB 에 존재하는(시드) 검색어 전제 — 읽기전용이므로 데이터 변경 없음
     private static final String TEST_SEARCH_WORD = "도자기";
 
@@ -64,90 +64,62 @@ class MainServiceJUnit {
         assertNotNull(mainService);
     }
 
-    /** 2. 메인 데이터 묶음 조회 (recommend/popular/latest 키 포함) */
+    /** 2. 메인 홈 피드 (가중치+최근30일, not null, size<=pageSize) */
     //@Disabled
     @Test
-    public void getMain() {
+    public void getHomeFeed() {
         log.debug("---------------------------");
-        log.debug("*getMain()*");
+        log.debug("*getHomeFeed()*");
         log.debug("---------------------------");
-        //1. 메인 데이터 조회
-        log.debug("1. 메인 데이터 조회");
-        Map<String, Object> mainData = mainService.getMain();
-        log.debug("mainData={}", mainData);
-
-        //2. Map not null 확인
-        log.debug("2. Map not null 확인");
-        assertNotNull(mainData);
-
-        //3. keySet 에 3개 섹션 키가 모두 있는지 확인
-        log.debug("3. keySet 에 3개 섹션 키가 모두 있는지 확인");
-        assertTrue(mainData.containsKey("recommendList"));
-        assertTrue(mainData.containsKey("popularList"));
-        assertTrue(mainData.containsKey("latestList"));
-    }
-
-    /** 3. 추천 섹션 (not null, size<=8) */
-    //@Disabled
-    @Test
-    public void getRecommend() {
-        log.debug("---------------------------");
-        log.debug("*getRecommend()*");
-        log.debug("---------------------------");
-        //1. 추천 목록 조회
-        log.debug("1. 추천 목록 조회");
-        List<ArtworkVO> list = mainService.getRecommend();
-        log.debug("recommend size={}", (list == null ? null : list.size()));
+        //1. 홈 피드 1페이지 조회
+        log.debug("1. 홈 피드 1페이지 조회");
+        List<ArtworkVO> list = mainService.getHomeFeed(1, FEED_PAGE_SIZE);
+        log.debug("homeFeed size={}", (list == null ? null : list.size()));
 
         //2. not null
         log.debug("2. not null");
         assertNotNull(list);
 
-        //3. 섹션 상한(8) 이하
-        log.debug("3. 섹션 상한(8) 이하");
-        assertTrue(list.size() <= MAIN_SECTION_SIZE);
+        //3. 페이지 상한 이하
+        log.debug("3. 페이지 상한 이하");
+        assertTrue(list.size() <= FEED_PAGE_SIZE);
     }
 
-    /** 4. 인기 섹션 (not null, size<=8) */
+    /** 3. 명예의전당 피드 (가중치 누적, not null, size<=pageSize) */
     //@Disabled
     @Test
-    public void getPopular() {
+    public void getHallFeed() {
         log.debug("---------------------------");
-        log.debug("*getPopular()*");
+        log.debug("*getHallFeed()*");
         log.debug("---------------------------");
-        //1. 인기 목록 조회
-        log.debug("1. 인기 목록 조회");
-        List<ArtworkVO> list = mainService.getPopular();
-        log.debug("popular size={}", (list == null ? null : list.size()));
+        //1. 명예의전당 1페이지 조회
+        log.debug("1. 명예의전당 1페이지 조회");
+        List<ArtworkVO> list = mainService.getHallFeed(1, FEED_PAGE_SIZE);
+        log.debug("hallFeed size={}", (list == null ? null : list.size()));
 
         //2. not null
         log.debug("2. not null");
         assertNotNull(list);
 
-        //3. 섹션 상한(8) 이하
-        log.debug("3. 섹션 상한(8) 이하");
-        assertTrue(list.size() <= MAIN_SECTION_SIZE);
+        //3. 페이지 상한 이하
+        log.debug("3. 페이지 상한 이하");
+        assertTrue(list.size() <= FEED_PAGE_SIZE);
     }
 
-    /** 5. 최신 섹션 (not null, size<=8) */
+    /** 4. 페이징 방어값 (pageNo/pageSize 0 이하 → 보정 후 정상 조회) */
     //@Disabled
     @Test
-    public void getLatest() {
+    public void getHomeFeedPagingGuard() {
         log.debug("---------------------------");
-        log.debug("*getLatest()*");
+        log.debug("*getHomeFeedPagingGuard()*");
         log.debug("---------------------------");
-        //1. 최신 목록 조회
-        log.debug("1. 최신 목록 조회");
-        List<ArtworkVO> list = mainService.getLatest();
-        log.debug("latest size={}", (list == null ? null : list.size()));
+        //1. 잘못된 페이징 값으로 조회 (0, -1)
+        log.debug("1. 잘못된 페이징 값으로 조회");
+        List<ArtworkVO> list = mainService.getHomeFeed(0, -1);
 
-        //2. not null
-        log.debug("2. not null");
+        //2. 보정되어 예외 없이 not null
+        log.debug("2. 보정되어 예외 없이 not null");
         assertNotNull(list);
-
-        //3. 섹션 상한(8) 이하
-        log.debug("3. 섹션 상한(8) 이하");
-        assertTrue(list.size() <= MAIN_SECTION_SIZE);
     }
 
     /** 6. 검색 준비 (totalCnt 세팅) */

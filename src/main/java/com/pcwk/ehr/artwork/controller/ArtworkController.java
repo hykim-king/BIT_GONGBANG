@@ -3,6 +3,8 @@ package com.pcwk.ehr.artwork.controller;
 import java.io.IOException;
 import java.util.List;
 
+import javax.servlet.http.HttpSession;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,9 +14,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
- 
+
 import com.pcwk.ehr.artwork.domain.ArtworkVO;
 import com.pcwk.ehr.artwork.service.ArtworkService;
+import com.pcwk.ehr.cmn.SessionConst;
+import com.pcwk.ehr.member.domain.MemberVO;
  
 /**
  * ArtworkController (ver2) - 게시판(완성 + 공개작업)의 웹 진입점.
@@ -98,8 +102,14 @@ public class ArtworkController {
 	 * 완성일(comp_dt)은 Mapper(doSave)에서 is_status='Y'일 때 SYSDATE로 자동 세팅됨.
 	 */
 	@PostMapping("/complete/doSave")
-	public String completeDoSave(@ModelAttribute ArtworkVO param) {
+	public String completeDoSave(@ModelAttribute ArtworkVO param, HttpSession session) {
 		log.debug("completeDoSave param: " + param);
+
+		MemberVO login = getLoginMember(session);            // 권한: 로그인 회원만 (CC-ART-01)
+		if (login == null) {
+			return "redirect:/member/login.do";
+		}
+		param.setMemberId(login.getMemberId());              // 작성자 = 세션(클라이언트 값 무시)
 
 		param.setIsStatus("Y");                              // 완성으로 등록
 		artworkService.doSave(param);                        // selectKey → param.artworkId 채움, comp_dt는 SQL에서 자동 세팅
@@ -172,12 +182,18 @@ public class ArtworkController {
 	 * isStatus='N' 로 등록 (comp_dt=null). 등록 후 상세로 redirect.
 	 */
 	@PostMapping("/working/doSave")
-	public String workingDoSave(@ModelAttribute ArtworkVO param) {
+	public String workingDoSave(@ModelAttribute ArtworkVO param, HttpSession session) {
 		log.debug("workingDoSave param: " + param);
- 
+
+		MemberVO login = getLoginMember(session);            // 권한: 로그인 회원만 (CC-ART-01)
+		if (login == null) {
+			return "redirect:/member/login.do";
+		}
+		param.setMemberId(login.getMemberId());              // 작성자 = 세션(클라이언트 값 무시)
+
 		param.setIsStatus("N");                              // 공개작업(작업중)으로 등록
 		artworkService.doSave(param);
- 
+
 		return "redirect:/artwork/working/view?artworkId=" + param.getArtworkId();
 	}
  
@@ -192,8 +208,14 @@ public class ArtworkController {
 	 * (권한 체크: 작성자/관리자만 - 인터셉터 또는 서비스 보강 필요, 현재 미구현)
 	 */
 	@PostMapping("/doUpdate")
-	public String doUpdate(@ModelAttribute ArtworkVO param) {
+	public String doUpdate(@ModelAttribute ArtworkVO param, HttpSession session) {
 		log.debug("doUpdate param: " + param);
+
+		ArtworkVO target = artworkService.findOne(param);            // 소유자 확인용 순수 조회
+		MemberVO login = getLoginMember(session);
+		if (!isOwnerOrAdmin(login, target)) {                        // 권한: 작성자 본인/관리자 (CC-CPL-02)
+			return authFailRedirect(login, target, param.getArtworkId());
+		}
 
 		artworkService.doUpdate(param);                              // 제목/내용/수정일 갱신
 		ArtworkVO saved = artworkService.findOne(param);             // 조회수 증가 없이 is_status 재확인
@@ -209,10 +231,14 @@ public class ArtworkController {
 	 * 첨부 물리파일 삭제 중 IOException 발생 시 트랜잭션 롤백(작품 유지) → 상세로 되돌림.
 	 */
 	@PostMapping("/doDelete")
-	public String doDelete(@ModelAttribute ArtworkVO param) {
+	public String doDelete(@ModelAttribute ArtworkVO param, HttpSession session) {
 		log.debug("doDelete param: " + param);
 
 		ArtworkVO target = artworkService.findOne(param);            // 삭제 전 is_status 확보 (삭제 후엔 조회 불가)
+		MemberVO login = getLoginMember(session);
+		if (!isOwnerOrAdmin(login, target)) {                        // 권한: 작성자 본인/관리자 (CC-ADM-02 확정: 관리자 허용 분기)
+			return authFailRedirect(login, target, param.getArtworkId());
+		}
 		String isStatus = target != null ? target.getIsStatus() : param.getIsStatus(); // 재조회 실패 시 폴백
 		try {
 			artworkService.doDelete(param);                          // 실제 삭제 (첨부 물리파일 포함)
@@ -241,10 +267,44 @@ public class ArtworkController {
 	 * 전환 후에도 작업일지가 있으면 공개작업 목록(하이브리드 필터)에 계속 보인다.
 	 */
 	@PostMapping("/working/complete")
-	public String complete(@ModelAttribute ArtworkVO param) {
+	public String complete(@ModelAttribute ArtworkVO param, HttpSession session) {
 		log.debug("complete param: " + param);
- 
+
+		ArtworkVO target = artworkService.findOne(param);
+		MemberVO login = getLoginMember(session);
+		if (login == null || target == null || login.getMemberId() != target.getMemberId()) {
+			// 권한: 완성 전환은 작성자 본인만 (CC-WRK-03)
+			return authFailRedirect(login, target, param.getArtworkId());
+		}
+
 		artworkService.complete(param);
 		return "redirect:/artwork/complete/view?artworkId=" + param.getArtworkId();
+	}
+
+	// =================================================================
+	//  권한 헬퍼 (작성자 본인/관리자 검증 — 스펙 '권한체크 공통 미구현' 보강)
+	// =================================================================
+
+	/** 세션의 로그인 회원(MemberVO). 비로그인 시 null */
+	private MemberVO getLoginMember(HttpSession session) {
+		Object obj = session.getAttribute(SessionConst.LOGIN_MEMBER);
+		return (obj instanceof MemberVO) ? (MemberVO) obj : null;
+	}
+
+	/** 작성자 본인이거나 관리자(isAdmin='Y')인지 */
+	private boolean isOwnerOrAdmin(MemberVO login, ArtworkVO target) {
+		if (login == null || target == null) {
+			return false;
+		}
+		return login.getMemberId() == target.getMemberId() || "Y".equals(login.getIsAdmin());
+	}
+
+	/** 권한 실패 시: 비로그인 → 로그인 페이지, 그 외 → 해당 작품 상세로 되돌림 */
+	private String authFailRedirect(MemberVO login, ArtworkVO target, int artworkId) {
+		if (login == null) {
+			return "redirect:/member/login.do";
+		}
+		String isStatus = target != null ? target.getIsStatus() : "Y";
+		return "redirect:" + viewUrl(isStatus, artworkId);
 	}
 }
