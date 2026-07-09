@@ -8,9 +8,63 @@
 		http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
 
 	<!-- DispatcherServlet Context: defines this servlet's request-processing infrastructure -->
+
+	<!-- multipartResolver 가 ${upload.max.request.size} 를 쓰므로 servlet context 에서도 로딩 -->
+	<context:property-placeholder
+		location="classpath:config/upload.properties,classpath:config/upload.local.properties"
+		ignore-resource-not-found="true" />
+
+	<!-- multipart/form-data (web.xml 2.5 → Commons resolver) -->
+	<beans:bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<beans:property name="maxUploadSize" value="${upload.max.request.size}" />
+		<beans:property name="defaultEncoding" value="UTF-8" />
+	</beans:bean>
 	
-	<!-- Enables the Spring MVC @Controller programming model -->
-	<annotation-driven />
+	<!-- @ResponseBody JSON → Gson (jackson 미사용, classpath 에 gson 만 등록) -->
+	<annotation-driven>
+		<message-converters>
+			<beans:bean class="org.springframework.http.converter.json.GsonHttpMessageConverter" />
+			<beans:bean class="org.springframework.http.converter.StringHttpMessageConverter">
+				<beans:property name="supportedMediaTypes">
+					<beans:list>
+						<beans:value>text/plain;charset=UTF-8</beans:value>
+						<beans:value>text/html;charset=UTF-8</beans:value>
+						<beans:value>application/json;charset=UTF-8</beans:value>
+					</beans:list>
+				</beans:property>
+			</beans:bean>
+			<beans:bean class="org.springframework.http.converter.ByteArrayHttpMessageConverter" />
+			<beans:bean class="org.springframework.http.converter.ResourceHttpMessageConverter" />
+		</message-converters>
+	</annotation-driven>
+
+	<interceptors>
+		<interceptor>
+			<!-- 회원 -->
+			<mapping path="/member/mypage.do"/>
+			<mapping path="/member/modify.do"/>
+			<mapping path="/member/doUpdate.do"/>
+			<mapping path="/member/doDelete.do"/>
+			<!-- 댓글 (쓰기) -->
+			<mapping path="/comment/doSave.do"/>
+			<mapping path="/comment/doUpdate.do"/>
+			<mapping path="/comment/doDelete.do"/>
+			<mapping path="/comment/doSelectOne.do"/>
+			<!-- 좋아요 (쓰기·내 목록) -->
+			<mapping path="/like/toggle.do"/>
+			<mapping path="/like/myLikes.do"/>
+			<!-- 첨부파일 (쓰기) -->
+			<mapping path="/file/upload.do"/>
+			<mapping path="/file/setRep.do"/>
+			<mapping path="/file/remove.do"/>
+			<beans:bean class="com.pcwk.ehr.cmn.LoginInterceptor"/>
+		</interceptor>
+		<interceptor>
+			<mapping path="/admin/**"/>
+			<beans:bean class="com.pcwk.ehr.cmn.AdminInterceptor"/>
+		</interceptor>
+	</interceptors>
 
 	<!-- Handles HTTP GET requests for /resources/** by efficiently serving up static resources in the ${webappRoot}/resources directory -->
 	<resources mapping="/resources/**" location="/resources/" />
@@ -21,6 +75,10 @@
 		<beans:property name="suffix" value=".jsp" />
 	</beans:bean>
 	
-	<context:component-scan base-package="com.pcwk.ehr" />
+	<!-- Controller 만 — Service 는 root-context.xml 에서 스캔 (@Transactional) -->
+	<context:component-scan base-package="com.pcwk.ehr" use-default-filters="false">
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
 	
 </beans:beans>

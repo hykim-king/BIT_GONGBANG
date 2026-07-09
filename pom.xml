@@ -22,16 +22,21 @@
 
 		<mybatis-version>3.5.16</mybatis-version>
 		<mybatis-spring-version>2.1.1</mybatis-spring-version>
+		
+		<!-- 파일 업로드에 필요한 라이브러리-->
+		<!-- https://mvnrepository.com/artifact/commons-fileupload/commons-fileupload -->
+		<commons-fileupload-version>1.5</commons-fileupload-version>
+		<commons-io-version>2.16.1</commons-io-version>
+
 	</properties>
 
 	<!-- 의존성 목록 -->
 	<dependencies>
-		<!-- Source: https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+		<!-- @ResponseBody JSON 변환 (Spring GsonHttpMessageConverter) -->
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.13.2</version>
-			<scope>compile</scope>
 		</dependency>
 
 		<dependency>
@@ -92,11 +97,6 @@
 			<version>${spring.version}</version>
 		</dependency>
 		<!-- JDBC / Tx -->
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-jdbc</artifactId>
-			<version>${spring.version}</version>
-		</dependency>
 
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -124,6 +124,18 @@
 			<groupId>javax.servlet</groupId>
 			<artifactId>jstl</artifactId>
 			<version>1.2</version>
+		</dependency>
+
+		<!-- multipart 파일 업로드 (CommonsMultipartResolver) -->
+		<dependency>
+			<groupId>commons-fileupload</groupId>
+			<artifactId>commons-fileupload</artifactId>
+			<version>${commons-fileupload-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>${commons-io-version}</version>
 		</dependency>
 
 		<!-- SLF4J: 로깅 프레임워크 -->

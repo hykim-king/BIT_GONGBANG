@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pcwk.ehr.mapper.LikeMapper">
+
+	<insert id="doSave" parameterType="com.pcwk.ehr.like.domain.LikeVO">
+		<selectKey keyProperty="likeId" resultType="java.lang.Integer" order="BEFORE">
+			SELECT seq_board_like.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO board_like (
+			like_id,
+			member_id,
+			target_type,
+			target_id
+		) VALUES (
+			#{likeId},
+			#{memberId},
+			#{targetType},
+			#{targetId}
+		)
+	</insert>
+
+	<delete id="doDelete" parameterType="com.pcwk.ehr.like.domain.LikeVO">
+		DELETE FROM board_like
+		WHERE member_id   = #{memberId}
+		  AND target_type = #{targetType}
+		  AND target_id   = #{targetId}
+	</delete>
+
+	<select id="doSelectOne" parameterType="com.pcwk.ehr.like.domain.LikeVO" resultType="com.pcwk.ehr.like.domain.LikeVO">
+		SELECT
+			like_id,
+			member_id,
+			target_type,
+			target_id
+		FROM board_like
+		WHERE member_id   = #{memberId}
+		  AND target_type = #{targetType}
+		  AND target_id   = #{targetId}
+	</select>
+
+	<select id="countByTarget" parameterType="com.pcwk.ehr.like.domain.LikeVO" resultType="java.lang.Integer">
+		SELECT COUNT(*)
+		FROM board_like
+		WHERE target_type = #{targetType}
+		  AND target_id   = #{targetId}
+	</select>
+
+	<select id="selectByMember" parameterType="com.pcwk.ehr.like.domain.LikeVO" resultType="com.pcwk.ehr.like.domain.LikeVO">
+		SELECT
+			like_id,
+			member_id,
+			target_type,
+			target_id
+		FROM board_like
+		WHERE member_id = #{memberId}
+		ORDER BY like_id DESC
+	</select>
+
+	<delete id="deleteByTarget" parameterType="com.pcwk.ehr.like.domain.LikeVO">
+		DELETE FROM board_like
+		WHERE target_type = #{targetType}
+		  AND target_id   = #{targetId}
+	</delete>
+
+	<!-- 테스트용 배포전에 삭제 ㄱㄱ -->
+	<delete id="deleteAll">
+		DELETE FROM board_like
+	</delete>
+
+</mapper>
+
