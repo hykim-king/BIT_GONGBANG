@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.pcwk.ehr.artwork.domain.ArtworkVO;
+import com.pcwk.ehr.artwork.service.ArtworkService;
 import com.pcwk.ehr.cmn.MessageVO;
 import com.pcwk.ehr.cmn.SessionConst;
 import com.pcwk.ehr.member.domain.MemberVO;
@@ -25,6 +27,9 @@ public class MemberController {
 
 	@Autowired
 	private MemberService memberService;
+
+	@Autowired
+	private ArtworkService artworkService;
 
 	public MemberController() {
 		log.debug("MemberController");
@@ -62,12 +67,13 @@ public class MemberController {
 		return new MessageVO("200", "로그인 성공", loginMember);
 	}
 
+	/** 로그아웃: 세션 무효화 후 홈으로 (CC-CMN-01 이벤트 8) */
 	@GetMapping("/logout.do")
 	public String logout(HttpSession session) {
 		if (session != null) {
 			session.invalidate();
 		}
-		return "redirect:/member/login.do";
+		return "redirect:/main/index.do";
 	}
 
 	@GetMapping("/join.do")
@@ -105,11 +111,27 @@ public class MemberController {
 		return new MessageVO("200", exists ? "중복" : "사용 가능", !exists);
 	}
 
+	/** 마이페이지(CC-USR-03): 프로필+집계 + 3탭(공개/완성/관심) 작품 목록 */
 	@GetMapping("/mypage.do")
 	public String mypage(HttpSession session, Model model) {
 		MemberVO loginMember = getLoginMember(session);
 		MemberVO myPage = memberService.getMyPage(loginMember.getMemberId());
 		model.addAttribute("member", myPage);
+
+		ArtworkVO cond = new ArtworkVO();
+		cond.setMemberId(loginMember.getMemberId());
+		cond.setIsStatus("N");
+		model.addAttribute("workingList", artworkService.selectByMember(cond));
+
+		ArtworkVO condY = new ArtworkVO();
+		condY.setMemberId(loginMember.getMemberId());
+		condY.setIsStatus("Y");
+		model.addAttribute("completeList", artworkService.selectByMember(condY));
+
+		ArtworkVO condLike = new ArtworkVO();
+		condLike.setMemberId(loginMember.getMemberId());
+		model.addAttribute("likedList", artworkService.selectLikedByMember(condLike));
+
 		return "member/mypage";
 	}
 

@@ -1,9 +1,7 @@
 package com.pcwk.ehr.main.service;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,41 +15,30 @@ import com.pcwk.ehr.mapper.ArtworkMapper;
 public class MainService {
 
 	private static final Logger log = LogManager.getLogger(MainService.class);
-	private static final int MAIN_SECTION_SIZE = 8;
-	private static final int POPULAR_DAYS = 7;
-	private static final int RECOMMEND_LIKE_WEIGHT = 3;
+	private static final int POPULAR_DAYS = 30;          // 아티팩트 확정: 최근 30일
+	private static final int RECOMMEND_LIKE_WEIGHT = 3;  // 가중치 공식 계수
 	private static final int DEFAULT_PAGE_SIZE = 12;
 
 	@Autowired
 	private ArtworkMapper artworkMapper;
 
-	public Map<String, Object> getMain() {
-		Map<String, Object> mainData = new HashMap<>();
-		mainData.put("recommendList", getRecommend());
-		mainData.put("popularList", getPopular());
-		mainData.put("latestList", getLatest());
-		return mainData;
-	}
-
-	public List<ArtworkVO> getRecommend() {
+	/** 메인 홈 단일 인기 피드(CC-MAIN-01): 가중치(like*3+view) + 최근 30일, 오프셋 페이징 */
+	public List<ArtworkVO> getHomeFeed(int pageNo, int pageSize) {
 		ArtworkVO vo = new ArtworkVO();
-		vo.setPageSize(MAIN_SECTION_SIZE);
-		vo.setLikeWeight(RECOMMEND_LIKE_WEIGHT);
-		return artworkMapper.selectRecommend(vo);
-	}
-
-	public List<ArtworkVO> getPopular() {
-		ArtworkVO vo = new ArtworkVO();
+		vo.setPageNo(pageNo <= 0 ? 1 : pageNo);
+		vo.setPageSize(pageSize <= 0 ? DEFAULT_PAGE_SIZE : pageSize);
 		vo.setDays(POPULAR_DAYS);
-		vo.setPageSize(MAIN_SECTION_SIZE);
+		vo.setLikeWeight(RECOMMEND_LIKE_WEIGHT);
 		return artworkMapper.selectPopular(vo);
 	}
 
-	public List<ArtworkVO> getLatest() {
+	/** 명예의전당 피드(CC-MAIN-02): 가중치 누적(기간 제한 없음), 오프셋 페이징 */
+	public List<ArtworkVO> getHallFeed(int pageNo, int pageSize) {
 		ArtworkVO vo = new ArtworkVO();
-		vo.setIsStatus("Y");
-		vo.setPageSize(MAIN_SECTION_SIZE);
-		return artworkMapper.selectMain(vo);
+		vo.setPageNo(pageNo <= 0 ? 1 : pageNo);
+		vo.setPageSize(pageSize <= 0 ? DEFAULT_PAGE_SIZE : pageSize);
+		vo.setLikeWeight(RECOMMEND_LIKE_WEIGHT);
+		return artworkMapper.selectRecommend(vo);
 	}
 
 	/** 검색 화면 — totalCnt 세팅 (searchDiv는 JSP용 원본 유지) */

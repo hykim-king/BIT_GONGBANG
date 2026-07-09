@@ -34,6 +34,7 @@ public class ArtworkVO extends DTO {
 		private String nickname;     // member.nickname (작성자)
 		private String categoryNm;   // category.category_nm (카테고리명)
 		private int    likeCount;    // board_like 집계 (추천/인기 정렬·표시)
+		private int    repFileId;    // attach_file 대표(is_rep='Y') file_id — 카드 썸네일용, 없으면 0
 	
 	public ArtworkVO() {
 		super();
@@ -157,7 +158,15 @@ public class ArtworkVO extends DTO {
 	public void setLikeCount(int likeCount) {
 		this.likeCount = likeCount;
 	}
-	
+
+	public int getRepFileId() {
+		return repFileId;
+	}
+
+	public void setRepFileId(int repFileId) {
+		this.repFileId = repFileId;
+	}
+
 	// ==== 메인 화면 사용 getter/setter ====
 	public int getDays() {
 		return days;

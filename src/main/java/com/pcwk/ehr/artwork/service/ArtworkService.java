@@ -62,6 +62,16 @@ public class ArtworkService {
 	public int selectCount(ArtworkVO param) {
 		return artworkMapper.selectCount(param);
 	}
+
+	/** 마이페이지 탭: 본인 작품 목록 (memberId 필수, isStatus 'Y'완성/'N'공개) — CC-USR-03 */
+	public List<ArtworkVO> selectByMember(ArtworkVO param) {
+		return artworkMapper.selectByMember(param);
+	}
+
+	/** 마이페이지 관심탭: 내가 좋아요 누른 작품 목록 (memberId 필수) — CC-USR-03 */
+	public List<ArtworkVO> selectLikedByMember(ArtworkVO param) {
+		return artworkMapper.selectLikedByMember(param);
+	}
  
 	/**
 	 * 상세 조회 + 조회수 1 증가 (완성게시판 상세용).

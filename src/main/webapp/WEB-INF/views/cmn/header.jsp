@@ -22,6 +22,7 @@
 <script src="${ctx}/resources/js/common.js"></script>
 <script src="${ctx}/resources/js/comment.js"></script>
 <script src="${ctx}/resources/js/upload.js"></script>
+<script src="${ctx}/resources/js/feed.js"></script>
 </head>
 <body data-ctx="${ctx}">
 
@@ -33,6 +34,8 @@
 	</a>
 	<div class="auth-actions">
 		<c:choose>
+			<%-- 명예의전당(CC-MAIN-02)은 로그인/회원가입 버튼 미노출: hideAuthButtons=true --%>
+			<c:when test="${empty sessionScope.loginMember and hideAuthButtons eq 'true'}"></c:when>
 			<c:when test="${empty sessionScope.loginMember}">
 				<button type="button" class="btn ghost" id="btnOpenLogin">로그인</button>
 				<button type="button" class="btn" id="btnOpenJoin">회원가입</button>

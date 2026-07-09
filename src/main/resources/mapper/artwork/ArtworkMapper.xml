@@ -145,47 +145,87 @@
 		WHERE ROWNUM &lt;= #{pageSize}
 	</select>
 	
-	<!-- ===== 메인: 추천 : selectRecommend ===== -->
-	<!-- 완성작 대상, (좋아요 * likeWeight + 조회수) 정렬 상위 pageSize 가중치·개수를 서비스에서 조절 -->
-	<!--  likeWeight : 좋아요가 조회수대비 얼마나 가중 을줄지 -->
+	<!-- ===== 메인/명예의전당 공용 카드 컬럼 (content CLOB 제외, 대표썸네일 rep_file_id 포함) ===== -->
+	<sql id="cardColumns">
+		a.artwork_id, a.member_id, a.category_id, a.is_status,
+		a.title, a.view_count, a.reg_dt, a.mod_dt, a.comp_dt,
+		m.nickname,
+		c.category_nm,
+		(SELECT COUNT(*) FROM board_like l
+		  WHERE l.target_type = 'ARTWORK' AND l.target_id = a.artwork_id) AS like_count,
+		NVL((SELECT MAX(f.file_id) FROM attach_file f
+		      WHERE f.target_type = 'ARTWORK' AND f.target_id = a.artwork_id
+		        AND f.is_rep = 'Y'), 0) AS rep_file_id
+	</sql>
+
+	<!-- ===== 명예의전당 : selectRecommend (CC-MAIN-02) =====
+	     완성작 대상, 가중치(like_count*likeWeight + view_count) 누적 정렬(기간 제한 없음).
+	     ROW_NUMBER 오프셋 페이징(무한스크롤). 별칭 산술 참조를 피하려고 like_count 를
+	     인라인뷰에서 확정한 뒤 바깥 계층에서 정렬한다. -->
 	<select id="selectRecommend" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
 	        resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
 		SELECT * FROM (
-			SELECT a.artwork_id, a.member_id, a.category_id, a.is_status,
-			       a.title, a.content, a.view_count, a.reg_dt, a.mod_dt, a.comp_dt,
-			       m.nickname,
-			       c.category_nm,
-			       (SELECT COUNT(*) FROM board_like l
-			         WHERE l.target_type = 'ARTWORK' AND l.target_id = a.artwork_id) AS like_count
-			  FROM artwork a
-			  JOIN member   m ON a.member_id   = m.member_id
-			  JOIN category c ON a.category_id = c.category_id
-			 WHERE a.is_status = 'Y'
-			 ORDER BY (like_count * #{likeWeight} + a.view_count) DESC, a.artwork_id DESC
+			SELECT t.*, ROW_NUMBER() OVER (
+			           ORDER BY (t.like_count * #{likeWeight} + t.view_count) DESC, t.artwork_id DESC) AS rn
+			  FROM (
+				SELECT <include refid="cardColumns"/>
+				  FROM artwork a
+				  JOIN member   m ON a.member_id   = m.member_id
+				  JOIN category c ON a.category_id = c.category_id
+				 WHERE a.is_status = 'Y'
+			) t
 		)
-		WHERE ROWNUM &lt;= #{pageSize}
+		WHERE rn BETWEEN ((#{pageNo} - 1) * #{pageSize} + 1) AND (#{pageNo} * #{pageSize})
+		ORDER BY rn
 	</select>
-	
-		<!-- ===== 메인: 인기 : selectPopular ===== -->
-	    <!-- 최근 days일 등록 완성작 중 좋아요순 상위 pageSize 건 -->
-	      
+
+	<!-- ===== 메인 홈 인기 피드 : selectPopular (CC-MAIN-01) =====
+	     최근 #{days}일 등록 완성작을 가중치(like_count*likeWeight + view_count)순 정렬.
+	     ROW_NUMBER 오프셋 페이징(무한스크롤). -->
 	<select id="selectPopular" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
 	        resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
 		SELECT * FROM (
-			SELECT a.artwork_id, a.member_id, a.category_id, a.is_status,
-			       a.title, a.content, a.view_count, a.reg_dt, a.mod_dt, a.comp_dt,
-			       m.nickname,
-			       c.category_nm,
-			       (SELECT COUNT(*) FROM board_like l
-			         WHERE l.target_type = 'ARTWORK' AND l.target_id = a.artwork_id) AS like_count
-			  FROM artwork a
-			  JOIN member   m ON a.member_id   = m.member_id
-			  JOIN category c ON a.category_id = c.category_id
-			 WHERE a.is_status = 'Y'
-			   AND a.reg_dt &gt;= SYSDATE - #{days}
-			 ORDER BY like_count DESC, a.view_count DESC, a.artwork_id DESC
+			SELECT t.*, ROW_NUMBER() OVER (
+			           ORDER BY (t.like_count * #{likeWeight} + t.view_count) DESC, t.artwork_id DESC) AS rn
+			  FROM (
+				SELECT <include refid="cardColumns"/>
+				  FROM artwork a
+				  JOIN member   m ON a.member_id   = m.member_id
+				  JOIN category c ON a.category_id = c.category_id
+				 WHERE a.is_status = 'Y'
+				   AND a.reg_dt &gt;= SYSDATE - #{days}
+			) t
 		)
-		WHERE ROWNUM &lt;= #{pageSize}
+		WHERE rn BETWEEN ((#{pageNo} - 1) * #{pageSize} + 1) AND (#{pageNo} * #{pageSize})
+		ORDER BY rn
+	</select>
+
+	<!-- ===== 마이페이지 탭: 본인 작품 목록 : selectByMember (CC-USR-03) =====
+	     완성탭 isStatus='Y' / 공개탭 isStatus='N'. 카드(썸네일/제목/좋아요) 렌더용 -->
+	<select id="selectByMember" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
+	        resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
+		SELECT <include refid="cardColumns"/>
+		  FROM artwork a
+		  JOIN member   m ON a.member_id   = m.member_id
+		  JOIN category c ON a.category_id = c.category_id
+		 WHERE a.member_id = #{memberId}
+		<if test="isStatus != null and isStatus != ''">
+		   AND a.is_status = #{isStatus}
+		</if>
+		 ORDER BY a.artwork_id DESC
+	</select>
+
+	<!-- ===== 마이페이지 관심탭: 내가 좋아요 누른 작품 : selectLikedByMember (CC-USR-03) ===== -->
+	<select id="selectLikedByMember" parameterType="com.pcwk.ehr.artwork.domain.ArtworkVO"
+	        resultType="com.pcwk.ehr.artwork.domain.ArtworkVO">
+		SELECT <include refid="cardColumns"/>
+		  FROM board_like bl
+		  JOIN artwork  a ON bl.target_id  = a.artwork_id
+		  JOIN member   m ON a.member_id   = m.member_id
+		  JOIN category c ON a.category_id = c.category_id
+		 WHERE bl.target_type = 'ARTWORK'
+		   AND bl.member_id   = #{memberId}
+		 ORDER BY bl.like_id DESC
 	</select>
 	
 	<!-- ===== 통합검색 : search (페이징) ==== -->

@@ -46,6 +46,12 @@ public interface ArtworkMapper extends WorkDiv<ArtworkVO> {
     //통합 검색 건수 : search 페이징 totalCnt 산출(searchDiv/searchWord 분기, member+category JOIN)
     public Integer searchCount(ArtworkVO param);
 
+    //마이페이지 탭 : 본인 작품 목록 (memberId 필수, isStatus 'Y'완성/'N'공개, 카드 컬럼)
+    public List<ArtworkVO> selectByMember(ArtworkVO param);
+
+    //마이페이지 관심탭 : 내가 좋아요 누른 작품 목록 (memberId 필수, 카드 컬럼)
+    public List<ArtworkVO> selectLikedByMember(ArtworkVO param);
+
     // 아트워크 테이블 삭제 (테스트 데이터 삭제)
     public int deleteAll();
 }
