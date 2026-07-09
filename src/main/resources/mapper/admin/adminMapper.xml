@@ -17,6 +17,8 @@
 			SELECT member_id, is_admin, email, nickname, user_intro,
 			       TO_CHAR(reg_dt, 'YYYY-MM-DD HH24:MI:SS') AS reg_dt,
 			       TO_CHAR(mod_dt, 'YYYY-MM-DD HH24:MI:SS') AS mod_dt,
+			       (SELECT COUNT(*) FROM artwork a
+			         WHERE a.member_id = member.member_id) AS artwork_cnt,
 			       ROW_NUMBER() OVER (ORDER BY member_id DESC) AS rn
 			  FROM member
 			<where>
@@ -89,5 +91,59 @@
 			</if>
 		</where>
 	</select>
+
+	<!-- ===== 대시보드 신규 통계 (CC-ADM-03) ===== -->
+
+	<!-- 완성:공개 구성비 — is_status 별 작품 수 -->
+	<select id="statusRatio" resultType="java.util.HashMap">
+		SELECT is_status AS "isStatus", COUNT(*) AS "cnt"
+		  FROM artwork
+		 GROUP BY is_status
+	</select>
+
+	<!-- 카테고리별 게시글 수 (작품 없는 카테고리도 0 으로 포함) -->
+	<select id="categoryArtworkStats" resultType="java.util.HashMap">
+		SELECT c.category_nm AS "categoryNm", COUNT(a.artwork_id) AS "cnt"
+		  FROM category c
+		  LEFT JOIN artwork a ON a.category_id = c.category_id
+		 GROUP BY c.category_id, c.category_nm
+		 ORDER BY COUNT(a.artwork_id) DESC, c.category_id
+	</select>
+
+	<!-- 최근 가입 회원 상위 N건 -->
+	<select id="recentMembers" parameterType="int"
+	        resultType="com.pcwk.ehr.member.domain.MemberVO">
+		SELECT * FROM (
+			SELECT member_id, is_admin, email, nickname,
+			       TO_CHAR(reg_dt, 'YYYY-MM-DD HH24:MI:SS') AS reg_dt
+			  FROM member
+			 ORDER BY reg_dt DESC, member_id DESC
+		)
+		WHERE ROWNUM &lt;= #{topN}
+	</select>
+
+	<!-- ===== 회원 관리 신설 (CC-ADM-01) ===== -->
+
+	<!-- 관리자 회원 수정: 닉네임/관리자여부 -->
+	<update id="updateMember" parameterType="com.pcwk.ehr.member.domain.MemberVO">
+		UPDATE member
+		   SET mod_dt = SYSDATE
+		<if test="nickname != null and nickname != ''">
+		     , nickname = #{nickname}
+		</if>
+		<if test='isAdmin == "Y" or isAdmin == "N"'>
+		     , is_admin = #{isAdmin}
+		</if>
+		 WHERE member_id = #{memberId}
+	</update>
+
+	<!-- 관리자 회원 삭제: member 행 삭제.
+	     회원 본인의 댓글/좋아요/첨부(DB)는 member FK ON DELETE CASCADE 로 정리.
+	     회원 소유 작품의 연쇄(타인 댓글·좋아요·첨부 물리파일 포함)는
+	     AdminService 가 ArtworkService.doDelete 오케스트레이션으로 선행 정리한다. -->
+	<delete id="deleteMember" parameterType="com.pcwk.ehr.member.domain.MemberVO">
+		DELETE FROM member
+		 WHERE member_id = #{memberId}
+	</delete>
 
 </mapper>

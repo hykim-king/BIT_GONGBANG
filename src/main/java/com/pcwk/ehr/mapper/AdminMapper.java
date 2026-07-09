@@ -1,8 +1,10 @@
 package com.pcwk.ehr.mapper;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import com.pcwk.ehr.artwork.domain.ArtworkVO;
 import com.pcwk.ehr.member.domain.MemberVO;
@@ -35,4 +37,21 @@ public interface AdminMapper {
 	List<ArtworkVO> artworkList(ArtworkVO param);
 
 	int artworkCnt(ArtworkVO param);
+
+	// ===== 대시보드 신규 통계 (CC-ADM-03) =====
+	/** 완성:공개 구성비 — [{isStatus, cnt}] */
+	List<Map<String, Object>> statusRatio();
+
+	/** 카테고리별 게시글 수 — [{categoryNm, cnt}] (작품 없는 카테고리 포함) */
+	List<Map<String, Object>> categoryArtworkStats();
+
+	/** 최근 가입 회원 상위 N건 */
+	List<MemberVO> recentMembers(@Param("topN") int topN);
+
+	// ===== 회원 관리 신설 (CC-ADM-01) =====
+	/** 관리자 회원 수정(닉네임/관리자여부) */
+	int updateMember(MemberVO param);
+
+	/** 관리자 회원 삭제(본인 흔적은 member FK CASCADE, 소유 작품 연쇄는 서비스 선행 정리) */
+	int deleteMember(MemberVO param);
 }

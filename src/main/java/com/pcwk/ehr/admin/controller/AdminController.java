@@ -1,8 +1,10 @@
 package com.pcwk.ehr.admin.controller;
 
+import java.io.IOException;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,12 +13,16 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.pcwk.ehr.admin.service.AdminService;
 import com.pcwk.ehr.artwork.domain.ArtworkVO;
 import com.pcwk.ehr.cmn.DTO;
+import com.pcwk.ehr.cmn.MessageVO;
 import com.pcwk.ehr.cmn.PageUtil;
+import com.pcwk.ehr.cmn.SessionConst;
 import com.pcwk.ehr.member.domain.MemberVO;
 
 /**
@@ -38,10 +44,13 @@ public class AdminController {
 		log.debug("AdminController");
 	}
 
-	/** 대시보드(통계) */
+	/** 대시보드(통계): 총계 5종 + 완성:공개 구성비 + 카테고리별 게시글 수 + 최근 가입 회원 */
 	@GetMapping("/dashboard.do")
 	public String dashboard(Model model) {
 		model.addAttribute("stats", adminService.stats());
+		model.addAttribute("statusRatio", adminService.statusRatio());
+		model.addAttribute("categoryStats", adminService.categoryArtworkStats());
+		model.addAttribute("recentMembers", adminService.recentMembers(5));
 		return "admin/dashboard";
 	}
 
@@ -75,6 +84,53 @@ public class AdminController {
 	@GetMapping("/category.do")
 	public String category() {
 		return "admin/admin_category";
+	}
+
+	/**
+	 * 관리자 회원 수정 (CC-ADM-01 신설, AJAX MessageVO).
+	 * 닉네임/관리자여부만 갱신. 자기 자신의 관리자 해제는 차단(관리자 잠금 방지).
+	 */
+	@PostMapping("/member_update.do")
+	@ResponseBody
+	public MessageVO memberUpdate(MemberVO param, HttpSession session) {
+		log.debug("memberUpdate param: " + param);
+
+		MemberVO login = (MemberVO) session.getAttribute(SessionConst.LOGIN_MEMBER);
+		if (login != null && login.getMemberId() == param.getMemberId()
+				&& "N".equals(param.getIsAdmin())) {
+			return new MessageVO("400", "자기 자신의 관리자 권한은 해제할 수 없습니다.");
+		}
+
+		int flag = adminService.updateMember(param);
+		return flag == 1
+				? new MessageVO("200", "회원 정보가 수정되었습니다.")
+				: new MessageVO("400", "회원 수정 실패(입력값 확인)");
+	}
+
+	/**
+	 * 관리자 회원 삭제 (CC-ADM-01 신설, AJAX MessageVO).
+	 * 연쇄 삭제(팀 확정): 소유 작품(첨부 물리파일 포함)·작업일지·댓글·좋아요까지 정리.
+	 * 자기 자신은 삭제 불가.
+	 */
+	@PostMapping("/member_delete.do")
+	@ResponseBody
+	public MessageVO memberDelete(MemberVO param, HttpSession session) {
+		log.debug("memberDelete param: " + param);
+
+		MemberVO login = (MemberVO) session.getAttribute(SessionConst.LOGIN_MEMBER);
+		if (login != null && login.getMemberId() == param.getMemberId()) {
+			return new MessageVO("400", "자기 자신은 삭제할 수 없습니다. 마이페이지 탈퇴를 이용하세요.");
+		}
+
+		try {
+			int flag = adminService.deleteMember(param);
+			return flag == 1
+					? new MessageVO("200", "회원과 연관 데이터가 삭제되었습니다.")
+					: new MessageVO("400", "회원 삭제 실패(대상 없음)");
+		} catch (IOException e) {
+			log.error("memberDelete 실패(첨부 파일 정리): memberId=" + param.getMemberId(), e);
+			return new MessageVO("500", "첨부 파일 정리 중 오류가 발생해 삭제가 취소되었습니다.");
+		}
 	}
 
 	/** pageNo>=1, pageSize>=1(기본 10) 보정. MemberVO/ArtworkVO 공통 부모 DTO 로 처리 */
