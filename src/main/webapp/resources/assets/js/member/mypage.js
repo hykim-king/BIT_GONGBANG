@@ -6,7 +6,7 @@
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 
-	var ctx = document.body.dataset.ctx || '';
+	const ctx = document.body.dataset.ctx || '';
 
 	/* 탭 전환: 클릭한 탭과 같은 이름의 pane 만 활성화 */
 	document.querySelectorAll('.mypage-tabs .tab').forEach(function (tab) {
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			document.querySelectorAll('.tab-pane').forEach(function (pane) {
 				pane.classList.remove('active');
 			});
-			var target = document.getElementById('pane-' + tab.dataset.pane);
+			const target = document.getElementById('pane-' + tab.dataset.pane);
 			if (target) {
 				target.classList.add('active');
 			}
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	});
 
 	/* 탈퇴 */
-	var btnWithdraw = document.getElementById('btnWithdraw');
+	const btnWithdraw = document.getElementById('btnWithdraw');
 	if (btnWithdraw) {
 		btnWithdraw.addEventListener('click', function () {
 			if (!confirm('정말 탈퇴하시겠습니까? 작성한 작품과 활동 내역이 삭제될 수 있습니다.')) return;

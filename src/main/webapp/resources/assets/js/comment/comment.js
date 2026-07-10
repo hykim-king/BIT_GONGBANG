@@ -12,8 +12,8 @@
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 
-	var ctx = document.body.dataset.ctx || '';
-	var esc = (window.bitda && window.bitda.esc) || function (s) { return String(s == null ? '' : s); };
+	const ctx = document.body.dataset.ctx || '';
+	const esc = (window.bitda && window.bitda.esc) || function (s) { return String(s == null ? '' : s); };
 
 	function fmtDt(s) {
 		/* "2026-07-09 17:57:14.0" / "2026-07-09 17:57:14" → "2026-07-09 17:57" */
@@ -21,8 +21,8 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	function itemHtml(c, loginMemberId) {
-		var mine = loginMemberId !== '' && String(c.memberId) === String(loginMemberId);
-		var html = '<li class="cmt-item" data-comment-id="' + c.commentId + '">';
+		const mine = loginMemberId !== '' && String(c.memberId) === String(loginMemberId);
+		let html = '<li class="cmt-item" data-comment-id="' + c.commentId + '">';
 		html += '<div class="cmt-meta"><strong class="cmt-nick">' + esc(c.nickname) + '</strong>';
 		html += '<span class="cmt-dt">' + fmtDt(c.regDt) + (c.modDt ? ' (수정됨)' : '') + '</span>';
 		if (mine) {
@@ -36,17 +36,17 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	function mount(box) {
-		var targetType = box.dataset.targetType;
-		var targetId = box.dataset.targetId;
-		var loginMemberId = String(box.dataset.loginMemberId === undefined ? '' : box.dataset.loginMemberId);
+		const targetType = box.dataset.targetType;
+		const targetId = box.dataset.targetId;
+		const loginMemberId = String(box.dataset.loginMemberId === undefined ? '' : box.dataset.loginMemberId);
 
 		function load() {
 			$.post(ctx + '/comment/doRetrieve.do', { targetType: targetType, targetId: targetId }, function (res) {
 				if (res.code !== '200') { return; }
-				var list = res.data || [];
+				const list = res.data || [];
 				box.querySelector('.cmt-count').textContent = '(' + list.length + ')';
-				var html = '';
-				for (var i = 0; i < list.length; i++) {
+				let html = '';
+				for (let i = 0; i < list.length; i++) {
 					html += itemHtml(list[i], loginMemberId);
 				}
 				box.querySelector('.cmt-list').innerHTML = html || '<li class="cmt-empty">첫 댓글을 남겨보세요.</li>';
@@ -66,10 +66,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		/* 등록 */
 		box.addEventListener('submit', function (e) {
-			var t = e.target.closest('.cmt-form');
+			const t = e.target.closest('.cmt-form');
 			if (!t) { return; }
 			e.preventDefault();
-			var content = box.querySelector('.cmt-input').value.trim();
+			const content = box.querySelector('.cmt-input').value.trim();
 			if (!content) { alert('댓글 내용을 입력하세요.'); return; }
 			window.bitda.requestAjax({
 				url: ctx + '/comment/doSave.do',
@@ -90,11 +90,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		/* 수정 — 인라인 편집 폼 전환 */
 		box.addEventListener('click', function (e) {
-			var t = e.target.closest('.cmt-edit');
+			const t = e.target.closest('.cmt-edit');
 			if (!t) { return; }
-			var item = t.closest('.cmt-item');
+			const item = t.closest('.cmt-item');
 			if (item.querySelector('.cmt-edit-form')) { return; }
-			var cur = item.querySelector('.cmt-content').textContent;
+			const cur = item.querySelector('.cmt-content').textContent;
 			item.querySelector('.cmt-content').style.display = 'none';
 			item.querySelector('.cmt-edit-area').innerHTML =
 				'<form class="cmt-edit-form" method="post">' +
@@ -102,24 +102,24 @@ document.addEventListener('DOMContentLoaded', function () {
 				'<button type="submit" class="btn small">저장</button>' +
 				'<button type="button" class="btn ghost small cmt-edit-cancel">취소</button></div>' +
 				'</form>';
-			var input = item.querySelector('.cmt-edit-input');
+			const input = item.querySelector('.cmt-edit-input');
 			input.value = cur;
 			input.focus();
 		});
 		box.addEventListener('click', function (e) {
-			var t = e.target.closest('.cmt-edit-cancel');
+			const t = e.target.closest('.cmt-edit-cancel');
 			if (!t) { return; }
-			var item = t.closest('.cmt-item');
+			const item = t.closest('.cmt-item');
 			item.querySelector('.cmt-edit-area').replaceChildren();
 			item.querySelector('.cmt-content').style.display = '';
 		});
 		box.addEventListener('submit', function (e) {
-			var t = e.target.closest('.cmt-edit-form');
+			const t = e.target.closest('.cmt-edit-form');
 			if (!t) { return; }
 			e.preventDefault();
-			var item = t.closest('.cmt-item');
-			var commentId = item.dataset.commentId;
-			var content = item.querySelector('.cmt-edit-input').value.trim();
+			const item = t.closest('.cmt-item');
+			const commentId = item.dataset.commentId;
+			const content = item.querySelector('.cmt-edit-input').value.trim();
 			if (!content) { alert('댓글 내용을 입력하세요.'); return; }
 			window.bitda.requestAjax({
 				url: ctx + '/comment/doUpdate.do',
@@ -136,10 +136,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		/* 삭제 */
 		box.addEventListener('click', function (e) {
-			var t = e.target.closest('.cmt-del');
+			const t = e.target.closest('.cmt-del');
 			if (!t) { return; }
 			if (!confirm('댓글을 삭제하시겠습니까?')) { return; }
-			var commentId = t.closest('.cmt-item').dataset.commentId;
+			const commentId = t.closest('.cmt-item').dataset.commentId;
 			window.bitda.requestAjax({
 				url: ctx + '/comment/doDelete.do',
 				data: { commentId: commentId },

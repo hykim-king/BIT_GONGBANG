@@ -8,8 +8,8 @@
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 
-	var ctx = document.body.dataset.ctx || '';
-	var loggedIn = document.body.dataset.loginMemberId !== undefined && String(document.body.dataset.loginMemberId) !== '';
+	const ctx = document.body.dataset.ctx || '';
+	const loggedIn = document.body.dataset.loginMemberId !== undefined && String(document.body.dataset.loginMemberId) !== '';
 
 	function render(btn, liked, count) {
 		btn.classList.toggle('liked', !!liked);
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		btn.querySelector('.like-heart').innerHTML = liked ? '&#10084;' : '&#9825;';
 	}
 
-	var btns = document.querySelectorAll('.like-btn');
+	const btns = document.querySelectorAll('.like-btn');
 	if (!btns.length) { return; }
 
 	/* 초기 카운트: data-count 있으면 서버 렌더값, 없으면 count.do 조회.
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	if (loggedIn) {
 		$.post(ctx + '/like/myLikes.do', function (res) {
 			if (res.code !== '200') { return; }
-			var mine = {};
+			const mine = {};
 			(res.data || []).forEach(function (l) { mine[l.targetType + ':' + l.targetId] = true; });
 			btns.forEach(function (b) {
 				if (mine[b.dataset.targetType + ':' + b.dataset.targetId]) {
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	document.addEventListener('click', function (e) {
-		var b = e.target.closest('.like-btn');
+		const b = e.target.closest('.like-btn');
 		if (!b) { return; }
 		window.bitda.requestAjax({
 			url: ctx + '/like/toggle.do',

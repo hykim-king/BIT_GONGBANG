@@ -14,7 +14,7 @@
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 
-	var ctx = document.body.dataset.ctx || '';
+	const ctx = document.body.dataset.ctx || '';
 
 	/* 유형 전환: 공개작업 선택 시 working/reg 로 이동 */
 	document.querySelectorAll('input[name=regType]').forEach(function (radio) {
@@ -27,26 +27,26 @@ document.addEventListener('DOMContentLoaded', function () {
 	window.bitda.fillCategorySelect(document.getElementById('categoryId'));
 
 	/* 등록 */
-	var artworkRegForm = document.getElementById('artworkRegForm');
+	const artworkRegForm = document.getElementById('artworkRegForm');
 	if (artworkRegForm) {
 		artworkRegForm.addEventListener('submit', function (e) {
 			e.preventDefault();
 			if (!document.getElementById('categoryId').value) { alert('카테고리를 선택하세요.'); return; }
-			var form = this;
-			var nativeXhr = $.ajaxSettings.xhr();
+			const form = this;
+			const nativeXhr = $.ajaxSettings.xhr();
 			$.ajax({
 				url: form.getAttribute('action'), method: 'POST', data: window.bitda.serializeForm(form),
 				xhr: function () { return nativeXhr; }
 			}).always(function () {
-				var finalUrl = nativeXhr.responseURL || '';
-				var m = finalUrl.match(/artworkId=(\d+)/);
+				const finalUrl = nativeXhr.responseURL || '';
+				const m = finalUrl.match(/artworkId=(\d+)/);
 				if (!m) {
 					alert('등록 처리 중 오류가 발생했습니다. 로그인 상태를 확인하세요.');
 					return;
 				}
-				var artworkId = m[1];
-				var up = window.bitda.uploader.get(document.querySelector('.upload-widget'));
-				var job = up ? up.uploadTo('ARTWORK', artworkId) : null;
+				const artworkId = m[1];
+				const up = window.bitda.uploader.get(document.querySelector('.upload-widget'));
+				const job = up ? up.uploadTo('ARTWORK', artworkId) : null;
 				if (job) {
 					job.always(function () { location.href = finalUrl; });
 				} else {

@@ -11,18 +11,18 @@
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 
-	var ctx = document.body.dataset.ctx || '';
-	var esc = (window.bitda && window.bitda.esc) || function (s) { return String(s == null ? '' : s); };
-	var PAGE_SIZE = 12;
+	const ctx = document.body.dataset.ctx || '';
+	const esc = (window.bitda && window.bitda.esc) || function (s) { return String(s == null ? '' : s); };
+	const PAGE_SIZE = 12;
 
 	window.bitda = window.bitda || {};
 
 	/* 카드 HTML — JSP(1페이지 서버 렌더)와 동일 구조 유지 */
 	function cardHtml(a, rank) {
-		var thumb = a.repFileId > 0
+		const thumb = a.repFileId > 0
 			? '<img class="thumb" src="' + ctx + '/file/download.do?fileId=' + a.repFileId + '" alt="' + esc(a.title) + '" loading="lazy">'
 			: '<div class="thumb ph">' + esc(String(a.title || '').charAt(0)) + '</div>';
-		var html = '<a class="art-card" href="' + ctx + '/artwork/complete/view?artworkId=' + a.artworkId + '">';
+		let html = '<a class="art-card" href="' + ctx + '/artwork/complete/view?artworkId=' + a.artworkId + '">';
 		if (rank) { html += '<span class="rank-badge">' + rank + '위</span>'; }
 		html += thumb;
 		html += '<div class="meta"><div class="t">' + esc(a.title) + '</div>';
@@ -33,13 +33,13 @@ document.addEventListener('DOMContentLoaded', function () {
 	window.bitda.cardHtml = cardHtml;
 
 	document.querySelectorAll('.masonry-feed').forEach(function (feed) {
-		var endpoint = feed.dataset.endpoint;
-		var useRank = String(feed.dataset.rank) === 'true';
-		var grid = feed.querySelector('.masonry');
-		var sentinel = feed.querySelector('.feed-sentinel');
-		var pageNo = 1;                                   /* 1페이지는 서버 렌더 */
-		var loading = false;
-		var done = grid.querySelectorAll('.art-card').length < PAGE_SIZE;   /* 첫 장부터 부족하면 끝 */
+		const endpoint = feed.dataset.endpoint;
+		const useRank = String(feed.dataset.rank) === 'true';
+		const grid = feed.querySelector('.masonry');
+		const sentinel = feed.querySelector('.feed-sentinel');
+		let pageNo = 1;                                   /* 1페이지는 서버 렌더 */
+		let loading = false;
+		let done = grid.querySelectorAll('.art-card').length < PAGE_SIZE;   /* 첫 장부터 부족하면 끝 */
 
 		function updateSentinel() {
 			if (sentinel) { sentinel.textContent = done ? '작품을 모두 확인했습니다' : '스크롤하면 더 불러옵니다…'; }
@@ -51,11 +51,11 @@ document.addEventListener('DOMContentLoaded', function () {
 			loading = true;
 			$.post(ctx + endpoint, { pageNo: pageNo + 1, pageSize: PAGE_SIZE }, function (res) {
 				if (res.code !== '200') { loading = false; return; }
-				var list = res.data || [];
+				const list = res.data || [];
 				pageNo += 1;
-				var base = grid.querySelectorAll('.art-card').length;
-				var html = '';
-				for (var i = 0; i < list.length; i++) {
+				const base = grid.querySelectorAll('.art-card').length;
+				let html = '';
+				for (let i = 0; i < list.length; i++) {
 					html += cardHtml(list[i], useRank ? (base + i + 1) : 0);
 				}
 				grid.insertAdjacentHTML('beforeend', html);

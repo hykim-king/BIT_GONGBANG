@@ -9,20 +9,20 @@
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 
-	var ctx = document.body.dataset.ctx || '';
-	var nicknameInput = document.getElementById('nickname');
-	var modifyForm = document.getElementById('modifyForm');
-	var nickMsg = document.getElementById('nickMsg');
+	const ctx = document.body.dataset.ctx || '';
+	const nicknameInput = document.getElementById('nickname');
+	const modifyForm = document.getElementById('modifyForm');
+	const nickMsg = document.getElementById('nickMsg');
 
 	/* 이 화면이 아니면 아무것도 하지 않는다 */
 	if (!modifyForm || !nicknameInput) { return; }
 
-	var originalNick = nicknameInput.value;
-	var memberId = modifyForm.dataset.memberId;
+	const originalNick = nicknameInput.value;
+	const memberId = modifyForm.dataset.memberId;
 	/* 처음 값 그대로면 중복확인 없이 저장 가능 */
-	var nickChecked = true;
+	let nickChecked = true;
 
-	var btnCheckNick = document.getElementById('btnCheckNick');
+	const btnCheckNick = document.getElementById('btnCheckNick');
 	if (btnCheckNick) {
 		btnCheckNick.addEventListener('click', function () {
 			if (window.bitda.isEmpty(nicknameInput, '닉네임을 입력하세요.')) { return; }
@@ -44,8 +44,8 @@ document.addEventListener('DOMContentLoaded', function () {
 	modifyForm.addEventListener('submit', function (e) {
 		e.preventDefault();
 		// 1. 입력값 읽기
-		var pw = document.getElementById('password').value;
-		var cpw = document.getElementById('confirmPassword').value;
+		const pw = document.getElementById('password').value;
+		const cpw = document.getElementById('confirmPassword').value;
 
 		// 2. 유효성 검사
 		if (pw && pw !== cpw) { alert('비밀번호가 일치하지 않습니다.'); return; }
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 	});
 
-	var btnWithdraw = document.getElementById('btnWithdraw');
+	const btnWithdraw = document.getElementById('btnWithdraw');
 	if (btnWithdraw) {
 		btnWithdraw.addEventListener('click', function () {
 			if (!confirm('정말 탈퇴하시겠습니까?')) return;

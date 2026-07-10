@@ -29,9 +29,9 @@
 	 * FormData는 HTML 표준에 따라 textarea의 줄바꿈을 CRLF(\r\n)로 바꿔버린다.
 	 * 줄바꿈이 LF(\n) 그대로 서버에 전달되도록 textarea 값만 다시 넣어준다. */
 	window.bitda.serializeForm = function (form) {
-		var params = new URLSearchParams(new FormData(form));
-		var areas = form.querySelectorAll('textarea[name]');
-		for (var i = 0; i < areas.length; i++) {
+		const params = new URLSearchParams(new FormData(form));
+		const areas = form.querySelectorAll('textarea[name]');
+		for (let i = 0; i < areas.length; i++) {
 			params.set(areas[i].name, areas[i].value);
 		}
 		return params.toString();
@@ -61,7 +61,7 @@
 
 	/* 이메일 형식이면 true */
 	window.bitda.isValidEmail = function (input, message) {
-		var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		if (!emailPattern.test(input.value.trim())) {
 			alert(message || '올바른 이메일 형식이 아닙니다.');
 			input.focus();
@@ -80,7 +80,7 @@
 	 * @returns {jqXHR}  .always() 등을 이어 붙일 수 있다.
 	 */
 	window.bitda.requestAjax = function (options) {
-		var failMessage = options.failMessage || '요청 처리 중 오류가 발생했습니다.';
+		const failMessage = options.failMessage || '요청 처리 중 오류가 발생했습니다.';
 		return $.ajax({
 			url: options.url,
 			type: options.type || 'POST',
@@ -105,15 +105,15 @@
 	 * select[data-selected] 값과 같은 옵션을 미리 선택한다. */
 	window.bitda.fillCategorySelect = function (sel) {
 		if (!sel) { return; }
-		var ctx = document.body.dataset.ctx || '';
-		var selected = String(sel.dataset.selected || '');
+		const ctx = document.body.dataset.ctx || '';
+		const selected = String(sel.dataset.selected || '');
 		window.bitda.requestAjax({
 			url: ctx + '/category/doRetrieve.do',
 			type: 'GET',
 			resFunction: function (res) {
 				if (res.code !== '200') { return; }
 				(res.data || []).forEach(function (cItem) {
-					var opt = document.createElement('option');
+					const opt = document.createElement('option');
 					opt.value = cItem.categoryId;
 					opt.textContent = cItem.categoryNm;
 					if (selected !== '' && String(cItem.categoryId) === selected) { opt.selected = true; }
@@ -156,12 +156,12 @@
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 
-	var ctx = document.body.dataset.ctx || '';
+	const ctx = document.body.dataset.ctx || '';
 
 	/* ---------- 모달 열기/닫기 ---------- */
 	function openModal(id) {
 		document.querySelectorAll('.overlay').forEach(function (el) { el.classList.remove('open'); });
-		var modal = document.querySelector(id);
+		const modal = document.querySelector(id);
 		if (modal) { modal.classList.add('open'); }
 	}
 	function closeModals() {
@@ -169,17 +169,17 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	document.addEventListener('click', function (e) {
-		var t = e.target.closest('#btnOpenLogin');
+		const t = e.target.closest('#btnOpenLogin');
 		if (!t) return;
 		openModal('#loginModal');
 	});
 	document.addEventListener('click', function (e) {
-		var t = e.target.closest('#btnOpenJoin');
+		const t = e.target.closest('#btnOpenJoin');
 		if (!t) return;
 		openModal('#joinModal');
 	});
 	document.addEventListener('click', function (e) {
-		var t = e.target.closest('.modal-close');
+		const t = e.target.closest('.modal-close');
 		if (!t) return;
 		closeModals();
 	});
@@ -192,12 +192,12 @@ document.addEventListener('DOMContentLoaded', function () {
 	});
 	/* 모달 전환(로그인 <-> 회원가입) */
 	document.addEventListener('click', function (e) {
-		var t = e.target.closest('#linkToJoin');
+		const t = e.target.closest('#linkToJoin');
 		if (!t) return;
 		openModal('#joinModal');
 	});
 	document.addEventListener('click', function (e) {
-		var t = e.target.closest('#linkToLogin');
+		const t = e.target.closest('#linkToLogin');
 		if (!t) return;
 		openModal('#loginModal');
 	});
@@ -206,10 +206,10 @@ document.addEventListener('DOMContentLoaded', function () {
 	   로그인 상태에서는 아래 요소들이 없으므로 반드시 null 가드가 필요하다. */
 
 	/* ---------- 로그인 (CC-USR-01): POST /member/doLoginAjax.do ---------- */
-	var loginForm = document.getElementById('loginForm');
+	const loginForm = document.getElementById('loginForm');
 	if (loginForm) {
-		var showLoginMsg = function (text) {
-			var loginMsg = document.getElementById('loginMsg');
+		const showLoginMsg = function (text) {
+			const loginMsg = document.getElementById('loginMsg');
 			loginMsg.textContent = text;
 			loginMsg.classList.remove('ok');
 			loginMsg.classList.add('fail');
@@ -217,8 +217,8 @@ document.addEventListener('DOMContentLoaded', function () {
 		loginForm.addEventListener('submit', function (e) {
 			e.preventDefault();
 			// 1. 입력값 읽기
-			var email = document.getElementById('loginEmail').value.trim();
-			var password = document.getElementById('loginPassword').value;
+			const email = document.getElementById('loginEmail').value.trim();
+			const password = document.getElementById('loginPassword').value;
 
 			// 2. 유효성 검사
 			if (!email || !password) {
@@ -246,13 +246,13 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	/* ---------- 회원가입 (CC-USR-02): checkEmail/checkNickname + doSave ---------- */
-	var joinEmailChecked = false;
-	var joinNickChecked = false;
+	let joinEmailChecked = false;
+	let joinNickChecked = false;
 
-	var btnJoinCheckEmail = document.getElementById('btnJoinCheckEmail');
+	const btnJoinCheckEmail = document.getElementById('btnJoinCheckEmail');
 	if (btnJoinCheckEmail) {
 		btnJoinCheckEmail.addEventListener('click', function () {
-			var emailInput = document.getElementById('joinEmail');
+			const emailInput = document.getElementById('joinEmail');
 			if (window.bitda.isEmpty(emailInput, '이메일을 입력하세요.')) { return; }
 			window.bitda.checkDuplicate(
 				ctx + '/member/checkEmail.do',
@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			);
 		});
 	}
-	var joinEmail = document.getElementById('joinEmail');
+	const joinEmail = document.getElementById('joinEmail');
 	if (joinEmail) {
 		joinEmail.addEventListener('input', function () {
 			joinEmailChecked = false;
@@ -270,10 +270,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 	}
 
-	var btnJoinCheckNick = document.getElementById('btnJoinCheckNick');
+	const btnJoinCheckNick = document.getElementById('btnJoinCheckNick');
 	if (btnJoinCheckNick) {
 		btnJoinCheckNick.addEventListener('click', function () {
-			var nicknameInput = document.getElementById('joinNickname');
+			const nicknameInput = document.getElementById('joinNickname');
 			if (window.bitda.isEmpty(nicknameInput, '닉네임을 입력하세요.')) { return; }
 			window.bitda.checkDuplicate(
 				ctx + '/member/checkNickname.do',
@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			);
 		});
 	}
-	var joinNickname = document.getElementById('joinNickname');
+	const joinNickname = document.getElementById('joinNickname');
 	if (joinNickname) {
 		joinNickname.addEventListener('input', function () {
 			joinNickChecked = false;
@@ -291,14 +291,14 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 	}
 
-	var joinForm = document.getElementById('joinForm');
+	const joinForm = document.getElementById('joinForm');
 	if (joinForm) {
 		joinForm.addEventListener('submit', function (e) {
 			e.preventDefault();
 			// 1. 입력값 읽기
-			var pw = document.getElementById('joinPassword').value;
-			var cpw = document.getElementById('joinConfirmPassword').value;
-			var intro = document.getElementById('joinUserIntro').value;
+			const pw = document.getElementById('joinPassword').value;
+			const cpw = document.getElementById('joinConfirmPassword').value;
+			const intro = document.getElementById('joinUserIntro').value;
 
 			// 2. 유효성 검사
 			if (!joinEmailChecked) { alert('이메일 중복확인을 해주세요.'); return; }

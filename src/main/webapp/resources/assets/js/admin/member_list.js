@@ -9,12 +9,12 @@
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 
-	var ctx = document.body.dataset.ctx || '';
+	const ctx = document.body.dataset.ctx || '';
 
 	/* 수정: 행 값을 모달 폼에 채우고 연다 */
 	document.querySelectorAll('.mem-edit').forEach(function (btn) {
 		btn.addEventListener('click', function () {
-			var tr = btn.closest('tr');
+			const tr = btn.closest('tr');
 			document.getElementById('editMemberId').value = tr.dataset.memberId;
 			document.getElementById('editNickname').value = tr.dataset.nickname;
 			document.getElementById('editIsAdmin').value = tr.dataset.isAdmin;
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 	});
 
-	var editForm = document.getElementById('memberEditForm');
+	const editForm = document.getElementById('memberEditForm');
 	if (editForm) {
 		editForm.addEventListener('submit', function (e) {
 			e.preventDefault();
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	/* 삭제 */
 	document.querySelectorAll('.mem-del').forEach(function (btn) {
 		btn.addEventListener('click', function () {
-			var tr = btn.closest('tr');
+			const tr = btn.closest('tr');
 			if (!confirm('"' + tr.dataset.nickname + '" 회원을 삭제하시겠습니까?\n작성한 작품·작업일지·댓글·좋아요가 모두 함께 삭제됩니다.')) { return; }
 			window.bitda.requestAjax({
 				url: ctx + '/admin/member_delete.do',

@@ -13,20 +13,20 @@
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 
-	var ctx = document.body.dataset.ctx || '';
-	var esc = (window.bitda && window.bitda.esc) || function (s) { return String(s == null ? '' : s); };
-	var MAX = 9;
-	var ALLOWED = /\.(jpe?g|png|webp)$/i;
+	const ctx = document.body.dataset.ctx || '';
+	const esc = (window.bitda && window.bitda.esc) || function (s) { return String(s == null ? '' : s); };
+	const MAX = 9;
+	const ALLOWED = /\.(jpe?g|png|webp)$/i;
 
 	window.bitda = window.bitda || {};
 	window.bitda.uploader = window.bitda.uploader || {};
 
 	function mount(w) {
-		var targetType = w.dataset.targetType;
-		var targetId = w.dataset.targetId;       /* ''(지연) 또는 숫자(즉시) */
-		var editable = String(w.dataset.editable) === 'true';
-		var deferred = (targetId === '' || targetId === undefined || targetId === null);
-		var pending = [];                          /* 지연 모드 File 보관 */
+		const targetType = w.dataset.targetType;
+		const targetId = w.dataset.targetId;       /* ''(지연) 또는 숫자(즉시) */
+		const editable = String(w.dataset.editable) === 'true';
+		const deferred = (targetId === '' || targetId === undefined || targetId === null);
+		let pending = [];                          /* 지연 모드 File 보관 */
 
 		if (editable) {
 			w.querySelector('.up-pick-label').style.display = '';
@@ -39,12 +39,12 @@ document.addEventListener('DOMContentLoaded', function () {
 		function loadServer() {
 			$.post(ctx + '/file/doRetrieve.do', { targetType: targetType, targetId: targetId }, function (res) {
 				if (res.code !== '200') { return; }
-				var list = res.data || [];
+				const list = res.data || [];
 				setCount(list.length);
-				var html = '';
-				for (var i = 0; i < list.length; i++) {
-					var f = list[i];
-					var rep = (f.isRep === 'Y');
+				let html = '';
+				for (let i = 0; i < list.length; i++) {
+					const f = list[i];
+					const rep = (f.isRep === 'Y');
 					html += '<div class="up-item' + (rep ? ' rep' : '') + '" data-file-id="' + f.fileId + '">';
 					html += '<img src="' + ctx + '/file/download.do?fileId=' + f.fileId + '" alt="' + esc(f.orgFileNm) + '">';
 					if (rep) { html += '<span class="up-rep-badge">대표</span>'; }
@@ -62,8 +62,8 @@ document.addEventListener('DOMContentLoaded', function () {
 		/* ---------- 지연 모드: 로컬 미리보기 렌더 ---------- */
 		function renderPending() {
 			setCount(pending.length);
-			var html = '';
-			for (var i = 0; i < pending.length; i++) {
+			let html = '';
+			for (let i = 0; i < pending.length; i++) {
 				html += '<div class="up-item' + (i === 0 ? ' rep' : '') + '" data-idx="' + i + '">';
 				html += '<img src="' + pending[i].url + '" alt="' + esc(pending[i].file.name) + '">';
 				if (i === 0) { html += '<span class="up-rep-badge">대표</span>'; }
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				alert('이미지는 최대 ' + MAX + '장까지 등록할 수 있습니다. (남은 슬롯 ' + remain + '장)');
 				return false;
 			}
-			for (var i = 0; i < files.length; i++) {
+			for (let i = 0; i < files.length; i++) {
 				if (!ALLOWED.test(files[i].name)) {
 					alert('jpg/jpeg/png/webp 형식만 업로드할 수 있습니다: ' + files[i].name);
 					return false;
@@ -95,15 +95,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		/* ---------- 파일 선택 ---------- */
 		w.addEventListener('change', function (e) {
-			var t = e.target.closest('.up-input');
+			const t = e.target.closest('.up-input');
 			if (!t) { return; }
-			var files = Array.prototype.slice.call(t.files || []);
+			const files = Array.prototype.slice.call(t.files || []);
 			t.value = '';
 			if (!files.length) { return; }
 			if (!validateFiles(files, MAX - currentCount())) { return; }
 
 			if (deferred) {
-				for (var i = 0; i < files.length; i++) {
+				for (let i = 0; i < files.length; i++) {
 					pending.push({ file: files[i], url: URL.createObjectURL(files[i]) });
 				}
 				renderPending();
@@ -113,8 +113,8 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 
 		function uploadNow(files, tType, tId, done) {
-			var fd = new FormData();
-			for (var i = 0; i < files.length; i++) { fd.append('files', files[i]); }
+			const fd = new FormData();
+			for (let i = 0; i < files.length; i++) { fd.append('files', files[i]); }
 			fd.append('targetType', tType);
 			fd.append('targetId', tId);
 			return $.ajax({
@@ -135,9 +135,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		/* ---------- 즉시 모드: 대표지정/삭제 ---------- */
 		w.addEventListener('click', function (e) {
-			var t = e.target.closest('.up-setrep');
+			const t = e.target.closest('.up-setrep');
 			if (!t) { return; }
-			var fileId = t.closest('.up-item').dataset.fileId;
+			const fileId = t.closest('.up-item').dataset.fileId;
 			window.bitda.requestAjax({
 				url: ctx + '/file/setRep.do',
 				data: { fileId: fileId },
@@ -148,10 +148,10 @@ document.addEventListener('DOMContentLoaded', function () {
 			});
 		});
 		w.addEventListener('click', function (e) {
-			var t = e.target.closest('.up-remove');
+			const t = e.target.closest('.up-remove');
 			if (!t) { return; }
 			if (!confirm('이미지를 삭제하시겠습니까?')) { return; }
-			var fileId = t.closest('.up-item').dataset.fileId;
+			const fileId = t.closest('.up-item').dataset.fileId;
 			window.bitda.requestAjax({
 				url: ctx + '/file/remove.do',
 				data: { fileId: fileId },
@@ -164,9 +164,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		/* ---------- 지연 모드: 로컬 삭제 ---------- */
 		w.addEventListener('click', function (e) {
-			var t = e.target.closest('.up-remove-local');
+			const t = e.target.closest('.up-remove-local');
 			if (!t) { return; }
-			var idx = Number(t.closest('.up-item').dataset.idx);
+			const idx = Number(t.closest('.up-item').dataset.idx);
 			URL.revokeObjectURL(pending[idx].url);
 			pending.splice(idx, 1);
 			renderPending();
@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			/* 지연 보관분을 지정 대상으로 일괄 업로드. jqXHR(Promise) 반환, 보관분 없으면 null */
 			uploadTo: function (tType, tId) {
 				if (!pending.length) { return null; }
-				var files = pending.map(function (p) { return p.file; });
+				const files = pending.map(function (p) { return p.file; });
 				return uploadNow(files, tType, tId, function () {
 					pending.forEach(function (p) { URL.revokeObjectURL(p.url); });
 					pending = [];

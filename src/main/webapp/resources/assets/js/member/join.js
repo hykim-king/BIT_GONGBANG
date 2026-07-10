@@ -9,14 +9,14 @@
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 
-	var ctx = document.body.dataset.ctx || '';
-	var emailChecked = false;
-	var nickChecked = false;
+	const ctx = document.body.dataset.ctx || '';
+	let emailChecked = false;
+	let nickChecked = false;
 
-	var btnCheckEmail = document.getElementById('btnCheckEmail');
+	const btnCheckEmail = document.getElementById('btnCheckEmail');
 	if (btnCheckEmail) {
 		btnCheckEmail.addEventListener('click', function () {
-			var emailInput = document.getElementById('email');
+			const emailInput = document.getElementById('email');
 			if (window.bitda.isEmpty(emailInput, '이메일을 입력하세요.')) { return; }
 			window.bitda.checkDuplicate(
 				ctx + '/member/checkEmail.do',
@@ -27,10 +27,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 	}
 
-	var btnCheckNick = document.getElementById('btnCheckNick');
+	const btnCheckNick = document.getElementById('btnCheckNick');
 	if (btnCheckNick) {
 		btnCheckNick.addEventListener('click', function () {
-			var nicknameInput = document.getElementById('nickname');
+			const nicknameInput = document.getElementById('nickname');
 			if (window.bitda.isEmpty(nicknameInput, '닉네임을 입력하세요.')) { return; }
 			window.bitda.checkDuplicate(
 				ctx + '/member/checkNickname.do',
@@ -49,12 +49,12 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 	});
 
-	var pageJoinForm = document.getElementById('pageJoinForm');
+	const pageJoinForm = document.getElementById('pageJoinForm');
 	if (pageJoinForm) {
 		pageJoinForm.addEventListener('submit', function (e) {
 			e.preventDefault();
 			// 1. 입력값 읽기
-			var form = this;
+			const form = this;
 
 			// 2. 유효성 검사
 			if (document.getElementById('password').value !== document.getElementById('confirmPassword').value) {

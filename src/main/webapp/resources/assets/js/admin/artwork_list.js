@@ -9,11 +9,11 @@
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 
-	var ctx = document.body.dataset.ctx || '';
+	const ctx = document.body.dataset.ctx || '';
 
 	document.querySelectorAll('.art-del').forEach(function (btn) {
 		btn.addEventListener('click', function () {
-			var tr = this.closest('tr');
+			const tr = this.closest('tr');
 			if (!confirm('"' + tr.dataset.title + '" 게시물을 삭제하시겠습니까?\n첨부/댓글/좋아요/작업일지가 함께 삭제됩니다.')) { return; }
 			$.ajax({
 				url: ctx + '/artwork/doDelete', method: 'POST',
