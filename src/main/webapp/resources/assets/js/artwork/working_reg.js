@@ -20,13 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	});
 
 	/* 카테고리 드롭다운 로드 */
-	$.get(ctx + '/category/doRetrieve.do', function (res) {
-		if (res.code !== '200') { return; }
-		var esc = (window.bitda && window.bitda.esc) || String;
-		(res.data || []).forEach(function (cItem) {
-			document.getElementById('categoryId').insertAdjacentHTML('beforeend', '<option value="' + cItem.categoryId + '">' + esc(cItem.categoryNm) + '</option>');
-		});
-	}, 'json');
+	window.bitda.fillCategorySelect(document.getElementById('categoryId'));
 
 	/* 등록 */
 	var regForm = document.getElementById('artworkRegForm');

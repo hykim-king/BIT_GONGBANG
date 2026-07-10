@@ -25,21 +25,13 @@ document.addEventListener('DOMContentLoaded', function () {
 	var btnCheckNick = document.getElementById('btnCheckNick');
 	if (btnCheckNick) {
 		btnCheckNick.addEventListener('click', function () {
-			var nickname = nicknameInput.value.trim();
-			if (!nickname) { alert('닉네임을 입력하세요.'); return; }
-			$.post(ctx + '/member/checkNickname.do', { nickname: nickname, memberId: memberId }, function (res) {
-				if (res.code === '200' && res.data === true) {
-					nickMsg.textContent = '사용 가능합니다.';
-					nickMsg.classList.remove('fail');
-					nickMsg.classList.add('ok');
-					nickChecked = true;
-				} else {
-					nickMsg.textContent = '이미 사용 중입니다.';
-					nickMsg.classList.remove('ok');
-					nickMsg.classList.add('fail');
-					nickChecked = false;
-				}
-			}, 'json');
+			if (window.bitda.isEmpty(nicknameInput, '닉네임을 입력하세요.')) { return; }
+			window.bitda.checkDuplicate(
+				ctx + '/member/checkNickname.do',
+				{ nickname: nicknameInput.value.trim(), memberId: memberId },
+				nickMsg,
+				function (ok) { nickChecked = ok; }
+			);
 		});
 	}
 
@@ -51,20 +43,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	modifyForm.addEventListener('submit', function (e) {
 		e.preventDefault();
+		// 1. 입력값 읽기
 		var pw = document.getElementById('password').value;
 		var cpw = document.getElementById('confirmPassword').value;
+
+		// 2. 유효성 검사
 		if (pw && pw !== cpw) { alert('비밀번호가 일치하지 않습니다.'); return; }
 		if (!nickChecked) { alert('닉네임 중복확인을 해주세요.'); return; }
 
-		$.post(ctx + '/member/doUpdate.do', window.bitda.serializeForm(this), function (res) {
-			if (res.code === '200') {
-				alert('수정되었습니다.');
-				location.href = ctx + '/member/mypage.do';
-			} else {
-				alert(res.message || '수정에 실패했습니다.');
+		// 3. ajax()
+		window.bitda.requestAjax({
+			url: ctx + '/member/doUpdate.do',
+			data: window.bitda.serializeForm(this),
+			failMessage: '요청 처리 중 오류가 발생했습니다. 로그인 상태를 확인하세요.',
+			// 4. 응답 처리
+			resFunction: function (res) {
+				if (res.code === '200') {
+					alert('수정되었습니다.');
+					location.href = ctx + '/member/mypage.do';
+				} else {
+					alert(res.message || '수정에 실패했습니다.');
+				}
 			}
-		}, 'json').fail(function () {
-			alert('요청 처리 중 오류가 발생했습니다. 로그인 상태를 확인하세요.');
 		});
 	});
 
@@ -72,15 +72,16 @@ document.addEventListener('DOMContentLoaded', function () {
 	if (btnWithdraw) {
 		btnWithdraw.addEventListener('click', function () {
 			if (!confirm('정말 탈퇴하시겠습니까?')) return;
-			$.post(ctx + '/member/doDelete.do', function (res) {
-				if (res.code === '200') {
-					alert('탈퇴가 완료되었습니다.');
-					location.href = ctx + '/member/login.do';
-				} else {
-					alert(res.message || '탈퇴에 실패했습니다.');
+			window.bitda.requestAjax({
+				url: ctx + '/member/doDelete.do',
+				resFunction: function (res) {
+					if (res.code === '200') {
+						alert('탈퇴가 완료되었습니다.');
+						location.href = ctx + '/member/login.do';
+					} else {
+						alert(res.message || '탈퇴에 실패했습니다.');
+					}
 				}
-			}, 'json').fail(function () {
-				alert('요청 처리 중 오류가 발생했습니다.');
 			});
 		});
 	}

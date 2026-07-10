@@ -71,17 +71,20 @@ document.addEventListener('DOMContentLoaded', function () {
 			e.preventDefault();
 			var content = box.querySelector('.cmt-input').value.trim();
 			if (!content) { alert('댓글 내용을 입력하세요.'); return; }
-			$.post(ctx + '/comment/doSave.do', { targetType: targetType, targetId: targetId, content: content }, function (res) {
-				if (res.code === '200') {
-					box.querySelector('.cmt-input').value = '';
-					load();
-				} else if (res.code === '401') {
-					alert('로그인이 필요합니다.');
-				} else {
-					alert(res.message || '댓글 등록에 실패했습니다.');
+			window.bitda.requestAjax({
+				url: ctx + '/comment/doSave.do',
+				data: { targetType: targetType, targetId: targetId, content: content },
+				failMessage: '요청 처리 중 오류가 발생했습니다. 로그인 상태를 확인하세요.',
+				resFunction: function (res) {
+					if (res.code === '200') {
+						box.querySelector('.cmt-input').value = '';
+						load();
+					} else if (res.code === '401') {
+						alert('로그인이 필요합니다.');
+					} else {
+						alert(res.message || '댓글 등록에 실패했습니다.');
+					}
 				}
-			}, 'json').fail(function () {
-				alert('요청 처리 중 오류가 발생했습니다. 로그인 상태를 확인하세요.');
 			});
 		});
 
@@ -118,14 +121,16 @@ document.addEventListener('DOMContentLoaded', function () {
 			var commentId = item.dataset.commentId;
 			var content = item.querySelector('.cmt-edit-input').value.trim();
 			if (!content) { alert('댓글 내용을 입력하세요.'); return; }
-			$.post(ctx + '/comment/doUpdate.do', { commentId: commentId, content: content }, function (res) {
-				if (res.code === '200') {
-					load();
-				} else {
-					alert(res.message || '댓글 수정에 실패했습니다.');
+			window.bitda.requestAjax({
+				url: ctx + '/comment/doUpdate.do',
+				data: { commentId: commentId, content: content },
+				resFunction: function (res) {
+					if (res.code === '200') {
+						load();
+					} else {
+						alert(res.message || '댓글 수정에 실패했습니다.');
+					}
 				}
-			}, 'json').fail(function () {
-				alert('요청 처리 중 오류가 발생했습니다.');
 			});
 		});
 
@@ -135,14 +140,16 @@ document.addEventListener('DOMContentLoaded', function () {
 			if (!t) { return; }
 			if (!confirm('댓글을 삭제하시겠습니까?')) { return; }
 			var commentId = t.closest('.cmt-item').dataset.commentId;
-			$.post(ctx + '/comment/doDelete.do', { commentId: commentId }, function (res) {
-				if (res.code === '200') {
-					load();
-				} else {
-					alert(res.message || '댓글 삭제에 실패했습니다.');
+			window.bitda.requestAjax({
+				url: ctx + '/comment/doDelete.do',
+				data: { commentId: commentId },
+				resFunction: function (res) {
+					if (res.code === '200') {
+						load();
+					} else {
+						alert(res.message || '댓글 삭제에 실패했습니다.');
+					}
 				}
-			}, 'json').fail(function () {
-				alert('요청 처리 중 오류가 발생했습니다.');
 			});
 		});
 

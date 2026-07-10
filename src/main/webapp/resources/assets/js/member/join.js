@@ -13,47 +13,31 @@ document.addEventListener('DOMContentLoaded', function () {
 	var emailChecked = false;
 	var nickChecked = false;
 
-	/* 중복확인 공통 처리: 결과 메시지 표시 + 확인 플래그 갱신 */
-	function postCheck(url, data, msg, onOk) {
-		$.post(url, data, function (res) {
-			if (res.code === '200' && res.data === true) {
-				msg.textContent = '사용 가능합니다.';
-				msg.classList.remove('fail');
-				msg.classList.add('ok');
-				onOk(true);
-			} else {
-				msg.textContent = '이미 사용 중입니다.';
-				msg.classList.remove('ok');
-				msg.classList.add('fail');
-				onOk(false);
-			}
-		}, 'json').fail(function () {
-			msg.textContent = '확인 중 오류가 발생했습니다.';
-			msg.classList.remove('ok');
-			msg.classList.add('fail');
-			onOk(false);
-		});
-	}
-
 	var btnCheckEmail = document.getElementById('btnCheckEmail');
 	if (btnCheckEmail) {
 		btnCheckEmail.addEventListener('click', function () {
-			var email = document.getElementById('email').value.trim();
-			if (!email) { alert('이메일을 입력하세요.'); return; }
-			postCheck(ctx + '/member/checkEmail.do', { email: email }, document.getElementById('emailMsg'), function (ok) {
-				emailChecked = ok;
-			});
+			var emailInput = document.getElementById('email');
+			if (window.bitda.isEmpty(emailInput, '이메일을 입력하세요.')) { return; }
+			window.bitda.checkDuplicate(
+				ctx + '/member/checkEmail.do',
+				{ email: emailInput.value.trim() },
+				document.getElementById('emailMsg'),
+				function (ok) { emailChecked = ok; }
+			);
 		});
 	}
 
 	var btnCheckNick = document.getElementById('btnCheckNick');
 	if (btnCheckNick) {
 		btnCheckNick.addEventListener('click', function () {
-			var nickname = document.getElementById('nickname').value.trim();
-			if (!nickname) { alert('닉네임을 입력하세요.'); return; }
-			postCheck(ctx + '/member/checkNickname.do', { nickname: nickname }, document.getElementById('nickMsg'), function (ok) {
-				nickChecked = ok;
-			});
+			var nicknameInput = document.getElementById('nickname');
+			if (window.bitda.isEmpty(nicknameInput, '닉네임을 입력하세요.')) { return; }
+			window.bitda.checkDuplicate(
+				ctx + '/member/checkNickname.do',
+				{ nickname: nicknameInput.value.trim() },
+				document.getElementById('nickMsg'),
+				function (ok) { nickChecked = ok; }
+			);
 		});
 	}
 
@@ -69,6 +53,10 @@ document.addEventListener('DOMContentLoaded', function () {
 	if (pageJoinForm) {
 		pageJoinForm.addEventListener('submit', function (e) {
 			e.preventDefault();
+			// 1. 입력값 읽기
+			var form = this;
+
+			// 2. 유효성 검사
 			if (document.getElementById('password').value !== document.getElementById('confirmPassword').value) {
 				alert('비밀번호가 일치하지 않습니다.');
 				return;
@@ -76,15 +64,20 @@ document.addEventListener('DOMContentLoaded', function () {
 			if (!emailChecked) { alert('이메일 중복확인을 해주세요.'); return; }
 			if (!nickChecked) { alert('닉네임 중복확인을 해주세요.'); return; }
 
-			$.post(ctx + '/member/doSave.do', window.bitda.serializeForm(this), function (res) {
-				if (res.code === '200') {
-					alert('가입이 완료되었습니다.');
-					location.href = ctx + '/member/login.do';
-				} else {
-					alert(res.message || '가입에 실패했습니다.');
+			// 3. ajax()
+			window.bitda.requestAjax({
+				url: ctx + '/member/doSave.do',
+				data: window.bitda.serializeForm(form),
+				failMessage: '가입 처리 중 오류가 발생했습니다.',
+				// 4. 응답 처리
+				resFunction: function (res) {
+					if (res.code === '200') {
+						alert('가입이 완료되었습니다.');
+						location.href = ctx + '/member/login.do';
+					} else {
+						alert(res.message || '가입에 실패했습니다.');
+					}
 				}
-			}, 'json').fail(function () {
-				alert('가입 처리 중 오류가 발생했습니다.');
 			});
 		});
 	}

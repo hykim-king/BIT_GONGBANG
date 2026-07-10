@@ -138,20 +138,28 @@ document.addEventListener('DOMContentLoaded', function () {
 			var t = e.target.closest('.up-setrep');
 			if (!t) { return; }
 			var fileId = t.closest('.up-item').dataset.fileId;
-			$.post(ctx + '/file/setRep.do', { fileId: fileId }, function (res) {
-				if (res.code === '200') { loadServer(); }
-				else { alert(res.message || '대표 지정에 실패했습니다.'); }
-			}, 'json').fail(function () { alert('요청 처리 중 오류가 발생했습니다.'); });
+			window.bitda.requestAjax({
+				url: ctx + '/file/setRep.do',
+				data: { fileId: fileId },
+				resFunction: function (res) {
+					if (res.code === '200') { loadServer(); }
+					else { alert(res.message || '대표 지정에 실패했습니다.'); }
+				}
+			});
 		});
 		w.addEventListener('click', function (e) {
 			var t = e.target.closest('.up-remove');
 			if (!t) { return; }
 			if (!confirm('이미지를 삭제하시겠습니까?')) { return; }
 			var fileId = t.closest('.up-item').dataset.fileId;
-			$.post(ctx + '/file/remove.do', { fileId: fileId }, function (res) {
-				if (res.code === '200') { loadServer(); }
-				else { alert(res.message || '삭제에 실패했습니다.'); }
-			}, 'json').fail(function () { alert('요청 처리 중 오류가 발생했습니다.'); });
+			window.bitda.requestAjax({
+				url: ctx + '/file/remove.do',
+				data: { fileId: fileId },
+				resFunction: function (res) {
+					if (res.code === '200') { loadServer(); }
+					else { alert(res.message || '삭제에 실패했습니다.'); }
+				}
+			});
 		});
 
 		/* ---------- 지연 모드: 로컬 삭제 ---------- */

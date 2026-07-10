@@ -51,18 +51,20 @@ document.addEventListener('DOMContentLoaded', function () {
 	document.addEventListener('click', function (e) {
 		var b = e.target.closest('.like-btn');
 		if (!b) { return; }
-		$.post(ctx + '/like/toggle.do', {
-			targetType: b.dataset.targetType, targetId: b.dataset.targetId
-		}, function (res) {
-			if (res.code === '200') {
-				render(b, res.data.liked, res.data.count);
-			} else if (res.code === '401') {
-				alert('로그인이 필요합니다.');
-			} else {
-				alert(res.message || '처리에 실패했습니다.');
+		window.bitda.requestAjax({
+			url: ctx + '/like/toggle.do',
+			data: { targetType: b.dataset.targetType, targetId: b.dataset.targetId },
+			/* 미로그인 시 LoginInterceptor 가 302(HTML)를 주므로 .fail 로 떨어진다 */
+			failMessage: '로그인이 필요합니다.',
+			resFunction: function (res) {
+				if (res.code === '200') {
+					render(b, res.data.liked, res.data.count);
+				} else if (res.code === '401') {
+					alert('로그인이 필요합니다.');
+				} else {
+					alert(res.message || '처리에 실패했습니다.');
+				}
 			}
-		}, 'json').fail(function () {
-			alert('로그인이 필요합니다.');
 		});
 	});
 });

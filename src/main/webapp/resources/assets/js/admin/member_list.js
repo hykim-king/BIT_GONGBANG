@@ -26,14 +26,18 @@ document.addEventListener('DOMContentLoaded', function () {
 	if (editForm) {
 		editForm.addEventListener('submit', function (e) {
 			e.preventDefault();
-			$.post(ctx + '/admin/member_update.do', window.bitda.serializeForm(editForm), function (res) {
-				if (res.code === '200') {
-					alert(res.message);
-					location.reload();
-				} else {
-					alert(res.message || '수정에 실패했습니다.');
+			window.bitda.requestAjax({
+				url: ctx + '/admin/member_update.do',
+				data: window.bitda.serializeForm(editForm),
+				resFunction: function (res) {
+					if (res.code === '200') {
+						alert(res.message);
+						location.reload();
+					} else {
+						alert(res.message || '수정에 실패했습니다.');
+					}
 				}
-			}, 'json').fail(function () { alert('요청 처리 중 오류가 발생했습니다.'); });
+			});
 		});
 	}
 
@@ -42,14 +46,18 @@ document.addEventListener('DOMContentLoaded', function () {
 		btn.addEventListener('click', function () {
 			var tr = btn.closest('tr');
 			if (!confirm('"' + tr.dataset.nickname + '" 회원을 삭제하시겠습니까?\n작성한 작품·작업일지·댓글·좋아요가 모두 함께 삭제됩니다.')) { return; }
-			$.post(ctx + '/admin/member_delete.do', { memberId: tr.dataset.memberId }, function (res) {
-				if (res.code === '200') {
-					alert(res.message);
-					location.reload();
-				} else {
-					alert(res.message || '삭제에 실패했습니다.');
+			window.bitda.requestAjax({
+				url: ctx + '/admin/member_delete.do',
+				data: { memberId: tr.dataset.memberId },
+				resFunction: function (res) {
+					if (res.code === '200') {
+						alert(res.message);
+						location.reload();
+					} else {
+						alert(res.message || '삭제에 실패했습니다.');
+					}
 				}
-			}, 'json').fail(function () { alert('요청 처리 중 오류가 발생했습니다.'); });
+			});
 		});
 	});
 });
