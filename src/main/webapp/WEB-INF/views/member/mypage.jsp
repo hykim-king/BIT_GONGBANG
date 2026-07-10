@@ -7,6 +7,7 @@
   충돌하여 DDL 변경(팀 합의) 전까지 닉네임 이니셜 아바타로 대체.
 --%>
 <c:set var="pageTitle" value="마이페이지 · 빚다"/>
+<c:set var="pageScript" value="member/mypage"/>
 <%@ include file="/WEB-INF/views/cmn/header.jsp" %>
 
 <div class="mypage-head">
@@ -89,42 +90,4 @@
 	<button type="button" class="btn danger small" id="btnWithdraw">탈퇴하기</button>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-	var ctx = document.body.dataset.ctx || '';
-
-	document.querySelectorAll('.mypage-tabs .tab').forEach(function (tab) {
-		tab.addEventListener('click', function () {
-			document.querySelectorAll('.mypage-tabs .tab').forEach(function (t) {
-				t.classList.remove('active');
-			});
-			tab.classList.add('active');
-			document.querySelectorAll('.tab-pane').forEach(function (pane) {
-				pane.classList.remove('active');
-			});
-			var target = document.getElementById('pane-' + tab.dataset.pane);
-			if (target) {
-				target.classList.add('active');
-			}
-		});
-	});
-
-	var btnWithdraw = document.getElementById('btnWithdraw');
-	if (btnWithdraw) {
-		btnWithdraw.addEventListener('click', function () {
-			if (!confirm('정말 탈퇴하시겠습니까? 작성한 작품과 활동 내역이 삭제될 수 있습니다.')) return;
-			$.post(ctx + '/member/doDelete.do', function(res) {
-				if (res.code === '200') {
-					alert('탈퇴가 완료되었습니다.');
-					location.href = ctx + '/main/index.do';
-				} else {
-					alert(res.message || '탈퇴에 실패했습니다.');
-				}
-			}, 'json').fail(function() {
-				alert('요청 처리 중 오류가 발생했습니다.');
-			});
-		});
-	}
-});
-</script>
 <%@ include file="/WEB-INF/views/cmn/footer.jsp" %>

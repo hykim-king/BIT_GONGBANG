@@ -18,8 +18,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><c:out value="${empty pageTitle ? '빚다 관리자' : pageTitle}"/></title>
 <link rel="stylesheet" href="${ctx}/resources/assets/css/common.css">
-<script src="${ctx}/resources/assets/js/jquery-4.0.0.js"></script>
-<script src="${ctx}/resources/assets/js/cmn/common.js"></script>
+<%-- defer: 로드 순서대로 DOMContentLoaded 직전에 실행. common.js 가 먼저 와야 한다. --%>
+<script src="${ctx}/resources/assets/js/jquery-4.0.0.js" defer></script>
+<script src="${ctx}/resources/assets/js/cmn/common.js" defer></script>
+<%-- 화면별 스크립트: 호스트 JSP가 header include 전에 <c:set var="pageScript" .../> 로 지정 --%>
+<c:if test="${not empty pageScript}">
+<script src="${ctx}/resources/assets/js/${pageScript}.js" defer></script>
+</c:if>
 </head>
 <body data-ctx="${ctx}">
 

@@ -8,12 +8,13 @@
 --%>
 <c:set var="pageTitle" value="${vo.title} · 빚다"/>
 <c:set var="activeMenu" value="complete"/>
+<c:set var="pageScript" value="artwork/complete_view"/>
 <%@ include file="/WEB-INF/views/cmn/header.jsp" %>
 
 <c:set var="isOwner" value="${not empty sessionScope.loginMember and sessionScope.loginMember.memberId == vo.memberId}"/>
 <c:set var="isAdminUser" value="${not empty sessionScope.loginMember and sessionScope.loginMember.isAdmin eq 'Y'}"/>
 
-<div style="max-width:820px;">
+<div id="artworkDetail" data-artwork-id="${vo.artworkId}" style="max-width:820px;">
 	<div id="heroArea">
 		<div class="detail-hero ph"><c:out value="${fn:substring(vo.title, 0, 1)}"/></div>
 	</div>
@@ -53,46 +54,4 @@
 	<%@ include file="/WEB-INF/views/artwork/entry_timeline.jsp" %>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-	var ctx = document.body.dataset.ctx || '';
-	var esc = (window.bitda && window.bitda.esc) || String;
-
-	/* 작품 첨부 로딩: 대표=hero, 나머지 썸네일(클릭 시 hero 교체) */
-	$.post(ctx + '/file/doRetrieve.do', { targetType: 'ARTWORK', targetId: ${vo.artworkId} }, function(res) {
-		if (res.code !== '200' || !(res.data || []).length) { return; }
-		var files = res.data;
-		document.getElementById('heroArea').innerHTML = '<img class="detail-hero" id="heroImg" src="' + ctx + '/file/download.do?fileId=' + files[0].fileId + '" alt="">';
-		var th = '';
-		files.forEach(function(f, i) {
-			th += '<img src="' + ctx + '/file/download.do?fileId=' + f.fileId + '" class="' + (f.isRep === 'Y' ? 'rep' : '') + '" data-file-id="' + f.fileId + '" alt="' + esc(f.orgFileNm) + '">';
-		});
-		document.getElementById('thumbArea').innerHTML = th;
-	}, 'json');
-	document.addEventListener('click', function(e) {
-		var t = e.target.closest('#thumbArea img');
-		if (!t) { return; }
-		var hero = document.getElementById('heroImg');
-		if (hero) { hero.setAttribute('src', ctx + '/file/download.do?fileId=' + t.dataset.fileId); }
-	});
-
-	/* 삭제(본인/관리자) */
-	var btnDelete = document.getElementById('btnArtworkDelete');
-	if (btnDelete) {
-		btnDelete.addEventListener('click', function() {
-			if (!confirm('작품을 삭제하시겠습니까? 첨부/댓글/좋아요가 함께 삭제됩니다.')) { return; }
-			var form = document.createElement('form');
-			form.method = 'post';
-			form.action = ctx + '/artwork/doDelete';
-			var input = document.createElement('input');
-			input.type = 'hidden';
-			input.name = 'artworkId';
-			input.value = ${vo.artworkId};
-			form.appendChild(input);
-			document.body.appendChild(form);
-			form.submit();
-		});
-	}
-});
-</script>
 <%@ include file="/WEB-INF/views/cmn/footer.jsp" %>

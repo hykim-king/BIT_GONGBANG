@@ -5,6 +5,7 @@
   제목/카테고리/본문 수정 + 기존 이미지 관리(즉시 모드 업로드 위젯: 추가/대표교환/삭제).
 --%>
 <c:set var="pageTitle" value="작품 수정 · 빚다"/>
+<c:set var="pageScript" value="artwork/complete_modify"/>
 <c:set var="activeMenu" value="${vo.isStatus eq 'Y' ? 'complete' : 'working'}"/>
 <%@ include file="/WEB-INF/views/cmn/header.jsp" %>
 
@@ -43,21 +44,4 @@
 	</div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-	var ctx = document.body.dataset.ctx || '';
-	var sel = document.getElementById('categoryId');
-	var selected = String(sel.dataset.selected || '');
-	$.get(ctx + '/category/doRetrieve.do', function(res) {
-		if (res.code !== '200') { return; }
-		(res.data || []).forEach(function(cItem) {
-			var opt = document.createElement('option');
-			opt.value = cItem.categoryId;
-			opt.textContent = cItem.categoryNm;
-			if (String(cItem.categoryId) === selected) { opt.selected = true; }
-			sel.appendChild(opt);
-		});
-	}, 'json');
-});
-</script>
 <%@ include file="/WEB-INF/views/cmn/footer.jsp" %>

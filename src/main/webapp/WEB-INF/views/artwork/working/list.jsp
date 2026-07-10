@@ -6,6 +6,7 @@
   완성 게시판과 동일 레이아웃 + 진행상태 뱃지(N=진행중/Y=완성).
 --%>
 <c:set var="pageTitle" value="공개작품 · 빚다"/>
+<c:set var="pageScript" value="artwork/working_list"/>
 <c:set var="activeMenu" value="working"/>
 <%@ include file="/WEB-INF/views/cmn/header.jsp" %>
 
@@ -70,21 +71,4 @@
 </div>
 </c:if>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-	var ctx = document.body.dataset.ctx || '';
-	var sel = document.getElementById('categoryFilter');
-	var selected = String(sel.dataset.selected || '0');
-	$.get(ctx + '/category/doRetrieve.do', function(res) {
-		if (res.code !== '200') { return; }
-		(res.data || []).forEach(function(cItem) {
-			var opt = document.createElement('option');
-			opt.value = cItem.categoryId;
-			opt.textContent = cItem.categoryNm;
-			if (String(cItem.categoryId) === selected) { opt.selected = true; }
-			sel.appendChild(opt);
-		});
-	}, 'json');
-});
-</script>
 <%@ include file="/WEB-INF/views/cmn/footer.jsp" %>

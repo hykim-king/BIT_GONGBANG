@@ -6,6 +6,7 @@
   삭제: 연쇄 삭제 확정(POST /admin/member_delete.do)
 --%>
 <c:set var="pageTitle" value="회원 관리 · 빚다 관리자"/>
+<c:set var="pageScript" value="admin/member_list"/>
 <c:set var="adminActiveMenu" value="member"/>
 <%@ include file="/WEB-INF/views/cmn/admin_header.jsp" %>
 
@@ -82,49 +83,4 @@
 	</div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-	var ctx = document.body.dataset.ctx || '';
-
-	document.querySelectorAll('.mem-edit').forEach(function(btn) {
-		btn.addEventListener('click', function() {
-			var tr = btn.closest('tr');
-			document.getElementById('editMemberId').value = tr.dataset.memberId;
-			document.getElementById('editNickname').value = tr.dataset.nickname;
-			document.getElementById('editIsAdmin').value = tr.dataset.isAdmin;
-			document.getElementById('memberEditModal').classList.add('open');
-		});
-	});
-
-	var editForm = document.getElementById('memberEditForm');
-	if (editForm) {
-		editForm.addEventListener('submit', function(e) {
-			e.preventDefault();
-			$.post(ctx + '/admin/member_update.do', window.bitda.serializeForm(editForm), function(res) {
-				if (res.code === '200') {
-					alert(res.message);
-					location.reload();
-				} else {
-					alert(res.message || '수정에 실패했습니다.');
-				}
-			}, 'json').fail(function() { alert('요청 처리 중 오류가 발생했습니다.'); });
-		});
-	}
-
-	document.querySelectorAll('.mem-del').forEach(function(btn) {
-		btn.addEventListener('click', function() {
-			var tr = btn.closest('tr');
-			if (!confirm('"' + tr.dataset.nickname + '" 회원을 삭제하시겠습니까?\n작성한 작품·작업일지·댓글·좋아요가 모두 함께 삭제됩니다.')) { return; }
-			$.post(ctx + '/admin/member_delete.do', { memberId: tr.dataset.memberId }, function(res) {
-				if (res.code === '200') {
-					alert(res.message);
-					location.reload();
-				} else {
-					alert(res.message || '삭제에 실패했습니다.');
-				}
-			}, 'json').fail(function() { alert('요청 처리 중 오류가 발생했습니다.'); });
-		});
-	});
-});
-</script>
 <%@ include file="/WEB-INF/views/cmn/footer.jsp" %>

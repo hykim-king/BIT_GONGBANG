@@ -6,6 +6,7 @@
   (관리자 허용 분기 — 4단계 반영) AJAX 호출 후 reload.
 --%>
 <c:set var="pageTitle" value="게시물 관리 · 빚다 관리자"/>
+<c:set var="pageScript" value="admin/artwork_list"/>
 <c:set var="adminActiveMenu" value="artwork"/>
 <%@ include file="/WEB-INF/views/cmn/admin_header.jsp" %>
 
@@ -66,22 +67,4 @@
 </div>
 </c:if>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-	var ctx = document.body.dataset.ctx || '';
-
-	/* 관리자 게시물 삭제: ArtworkController.doDelete 재사용(관리자 허용 분기).
-	   redirect 응답은 버리고 관리 목록을 reload */
-	document.querySelectorAll('.art-del').forEach(function (btn) {
-		btn.addEventListener('click', function () {
-			var tr = this.closest('tr');
-			if (!confirm('"' + tr.dataset.title + '" 게시물을 삭제하시겠습니까?\n첨부/댓글/좋아요/작업일지가 함께 삭제됩니다.')) { return; }
-			$.ajax({
-				url: ctx + '/artwork/doDelete', method: 'POST',
-				data: { artworkId: tr.dataset.artworkId }
-			}).always(function() { location.reload(); });
-		});
-	});
-});
-</script>
 <%@ include file="/WEB-INF/views/cmn/footer.jsp" %>

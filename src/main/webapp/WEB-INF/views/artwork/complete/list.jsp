@@ -6,6 +6,7 @@
   행: 번호/제목/작성자/카테고리/좋아요/조회수/대표썸네일(우측).
 --%>
 <c:set var="pageTitle" value="완성품 · 빚다"/>
+<c:set var="pageScript" value="artwork/complete_list"/>
 <c:set var="activeMenu" value="complete"/>
 <%@ include file="/WEB-INF/views/cmn/header.jsp" %>
 
@@ -68,22 +69,4 @@
 </div>
 </c:if>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-	var ctx = document.body.dataset.ctx || '';
-	var sel = document.getElementById('categoryFilter');
-	var selected = String(sel.dataset.selected || '0');
-	$.get(ctx + '/category/doRetrieve.do', function(res) {
-		if (res.code !== '200') { return; }
-		var esc = (window.bitda && window.bitda.esc) || String;
-		(res.data || []).forEach(function(cItem) {
-			var opt = document.createElement('option');
-			opt.value = cItem.categoryId;
-			opt.textContent = cItem.categoryNm;
-			if (String(cItem.categoryId) === selected) { opt.selected = true; }
-			sel.appendChild(opt);
-		});
-	}, 'json');
-});
-</script>
 <%@ include file="/WEB-INF/views/cmn/footer.jsp" %>

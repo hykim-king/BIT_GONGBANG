@@ -18,12 +18,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><c:out value="${empty pageTitle ? '빚다 · BITDA' : pageTitle}"/></title>
 <link rel="stylesheet" href="${ctx}/resources/assets/css/common.css">
-<script src="${ctx}/resources/assets/js/jquery-4.0.0.js"></script>
-<script src="${ctx}/resources/assets/js/cmn/common.js"></script>
-<script src="${ctx}/resources/assets/js/comment/comment.js"></script>
-<script src="${ctx}/resources/assets/js/file/upload.js"></script>
-<script src="${ctx}/resources/assets/js/main/feed.js"></script>
-<script src="${ctx}/resources/assets/js/like/like.js"></script>
+<%-- defer: 문서 파싱을 막지 않고, 로드 순서대로 DOMContentLoaded 직전에 실행된다.
+     common.js 가 window.bitda.esc / serializeForm 을 정의하므로 반드시 먼저 와야 한다. --%>
+<script src="${ctx}/resources/assets/js/jquery-4.0.0.js" defer></script>
+<script src="${ctx}/resources/assets/js/cmn/common.js" defer></script>
+<script src="${ctx}/resources/assets/js/comment/comment.js" defer></script>
+<script src="${ctx}/resources/assets/js/file/upload.js" defer></script>
+<script src="${ctx}/resources/assets/js/main/feed.js" defer></script>
+<script src="${ctx}/resources/assets/js/like/like.js" defer></script>
+<script src="${ctx}/resources/assets/js/artwork/entry_timeline.js" defer></script>
+<%-- 화면별 스크립트: 호스트 JSP가 header include 전에 <c:set var="pageScript" .../> 로 지정 --%>
+<c:if test="${not empty pageScript}">
+<script src="${ctx}/resources/assets/js/${pageScript}.js" defer></script>
+</c:if>
 </head>
 <body data-ctx="${ctx}" data-login-member-id="${empty sessionScope.loginMember ? '' : sessionScope.loginMember.memberId}">
 
