@@ -83,40 +83,47 @@
 </div>
 
 <script>
-$(function() {
-	var ctx = $('body').data('ctx') || '';
+document.addEventListener('DOMContentLoaded', function() {
+	var ctx = document.body.dataset.ctx || '';
 
-	$('.mem-edit').on('click', function() {
-		var $tr = $(this).closest('tr');
-		$('#editMemberId').val($tr.data('member-id'));
-		$('#editNickname').val($tr.data('nickname'));
-		$('#editIsAdmin').val($tr.data('is-admin'));
-		$('#memberEditModal').addClass('open');
+	document.querySelectorAll('.mem-edit').forEach(function(btn) {
+		btn.addEventListener('click', function() {
+			var tr = btn.closest('tr');
+			document.getElementById('editMemberId').value = tr.dataset.memberId;
+			document.getElementById('editNickname').value = tr.dataset.nickname;
+			document.getElementById('editIsAdmin').value = tr.dataset.isAdmin;
+			document.getElementById('memberEditModal').classList.add('open');
+		});
 	});
 
-	$('#memberEditForm').on('submit', function(e) {
-		e.preventDefault();
-		$.post(ctx + '/admin/member_update.do', $(this).serialize(), function(res) {
-			if (res.code === '200') {
-				alert(res.message);
-				location.reload();
-			} else {
-				alert(res.message || '수정에 실패했습니다.');
-			}
-		}, 'json').fail(function() { alert('요청 처리 중 오류가 발생했습니다.'); });
-	});
+	var editForm = document.getElementById('memberEditForm');
+	if (editForm) {
+		editForm.addEventListener('submit', function(e) {
+			e.preventDefault();
+			$.post(ctx + '/admin/member_update.do', window.bitda.serializeForm(editForm), function(res) {
+				if (res.code === '200') {
+					alert(res.message);
+					location.reload();
+				} else {
+					alert(res.message || '수정에 실패했습니다.');
+				}
+			}, 'json').fail(function() { alert('요청 처리 중 오류가 발생했습니다.'); });
+		});
+	}
 
-	$('.mem-del').on('click', function() {
-		var $tr = $(this).closest('tr');
-		if (!confirm('"' + $tr.data('nickname') + '" 회원을 삭제하시겠습니까?\n작성한 작품·작업일지·댓글·좋아요가 모두 함께 삭제됩니다.')) { return; }
-		$.post(ctx + '/admin/member_delete.do', { memberId: $tr.data('member-id') }, function(res) {
-			if (res.code === '200') {
-				alert(res.message);
-				location.reload();
-			} else {
-				alert(res.message || '삭제에 실패했습니다.');
-			}
-		}, 'json').fail(function() { alert('요청 처리 중 오류가 발생했습니다.'); });
+	document.querySelectorAll('.mem-del').forEach(function(btn) {
+		btn.addEventListener('click', function() {
+			var tr = btn.closest('tr');
+			if (!confirm('"' + tr.dataset.nickname + '" 회원을 삭제하시겠습니까?\n작성한 작품·작업일지·댓글·좋아요가 모두 함께 삭제됩니다.')) { return; }
+			$.post(ctx + '/admin/member_delete.do', { memberId: tr.dataset.memberId }, function(res) {
+				if (res.code === '200') {
+					alert(res.message);
+					location.reload();
+				} else {
+					alert(res.message || '삭제에 실패했습니다.');
+				}
+			}, 'json').fail(function() { alert('요청 처리 중 오류가 발생했습니다.'); });
+		});
 	});
 });
 </script>

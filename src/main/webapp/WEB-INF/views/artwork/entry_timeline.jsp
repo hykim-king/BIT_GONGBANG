@@ -1,4 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%--
   작업일지 타임라인 프래그먼트 (CC-CPL-02/CC-WRK-02 공용, 최신 일차 → 1일차)
   전제(호스트에서 c:set):
@@ -36,52 +38,66 @@
 </div>
 
 <script>
-$(function() {
-	var ctx = $('body').data('ctx') || '';
+document.addEventListener('DOMContentLoaded', function() {
+	var ctx = document.body.dataset.ctx || '';
 	var esc = (window.bitda && window.bitda.esc) || String;
 
 	/* 일차별 사진 로딩 (targetType=ARTWORK_ENTRY) */
-	$('.entry-photos').each(function() {
-		var $ph = $(this);
-		$.post(ctx + '/file/doRetrieve.do', { targetType: 'ARTWORK_ENTRY', targetId: $ph.data('entry-id') }, function(res) {
+	document.querySelectorAll('.entry-photos').forEach(function(ph) {
+		$.post(ctx + '/file/doRetrieve.do', { targetType: 'ARTWORK_ENTRY', targetId: ph.dataset.entryId }, function(res) {
 			if (res.code !== '200' || !(res.data || []).length) { return; }
 			var html = '';
 			res.data.forEach(function(f) {
 				html += '<img src="' + ctx + '/file/download.do?fileId=' + f.fileId + '" alt="' + esc(f.orgFileNm) + '" loading="lazy">';
 			});
-			$ph.html(html);
+			ph.innerHTML = html;
 		}, 'json');
 	});
 
 	/* 일차 수정(본인): 인라인 폼 전환 → POST /artworkEntry/doUpdate */
-	$(document).on('click', '.entry-edit', function() {
-		var $item = $(this).closest('.entry-item');
-		if ($item.find('.entry-edit-form').length) { return; }
-		var cur = $item.find('.entry-body').text();
-		$item.find('.entry-body').hide();
-		$item.find('.entry-edit-area').html(
+	document.addEventListener('click', function(e) {
+		var t = e.target.closest('.entry-edit');
+		if (!t) return;
+		var item = t.closest('.entry-item');
+		if (item.querySelectorAll('.entry-edit-form').length) { return; }
+		var cur = item.querySelector('.entry-body').textContent;
+		item.querySelector('.entry-body').style.display = 'none';
+		item.querySelector('.entry-edit-area').innerHTML =
 			'<form class="entry-edit-form" method="post" action="' + ctx + '/artworkEntry/doUpdate">' +
-			'<input type="hidden" name="artworkEntry" value="' + $item.data('entry-id') + '">' +
+			'<input type="hidden" name="artworkEntry" value="' + item.dataset.entryId + '">' +
 			'<textarea class="text-input" name="content" rows="4" required></textarea>' +
 			'<div style="display:flex;gap:6px;margin-top:8px;">' +
 			'<button type="submit" class="btn small">저장</button>' +
 			'<button type="button" class="btn ghost small entry-edit-cancel">취소</button></div>' +
-			'</form>');
-		$item.find('.entry-edit-form textarea').val(cur).focus();
+			'</form>';
+		var ta = item.querySelector('.entry-edit-form textarea');
+		ta.value = cur;
+		ta.focus();
 	});
-	$(document).on('click', '.entry-edit-cancel', function() {
-		var $item = $(this).closest('.entry-item');
-		$item.find('.entry-edit-area').empty();
-		$item.find('.entry-body').show();
+	document.addEventListener('click', function(e) {
+		var t = e.target.closest('.entry-edit-cancel');
+		if (!t) return;
+		var item = t.closest('.entry-item');
+		item.querySelector('.entry-edit-area').replaceChildren();
+		item.querySelector('.entry-body').style.display = '';
 	});
 
 	/* 일차 삭제(본인): confirm 후 POST form 제출 */
-	$(document).on('click', '.entry-del', function() {
+	document.addEventListener('click', function(e) {
+		var t = e.target.closest('.entry-del');
+		if (!t) return;
 		if (!confirm('이 작업일지를 삭제하시겠습니까?')) { return; }
-		var entryId = $(this).closest('.entry-item').data('entry-id');
-		$('<form>', { method: 'post', action: ctx + '/artworkEntry/doDelete' })
-			.append($('<input>', { type: 'hidden', name: 'artworkEntry', value: entryId }))
-			.appendTo('body').trigger('submit');
+		var entryId = t.closest('.entry-item').dataset.entryId;
+		var form = document.createElement('form');
+		form.method = 'post';
+		form.action = ctx + '/artworkEntry/doDelete';
+		var input = document.createElement('input');
+		input.type = 'hidden';
+		input.name = 'artworkEntry';
+		input.value = entryId;
+		form.appendChild(input);
+		document.body.appendChild(form);
+		form.submit();
 	});
 });
 </script>

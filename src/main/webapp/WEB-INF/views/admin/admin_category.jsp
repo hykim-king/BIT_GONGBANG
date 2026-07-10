@@ -28,8 +28,8 @@
 </div>
 
 <script>
-$(function() {
-	var ctx = $('body').data('ctx') || '';
+document.addEventListener('DOMContentLoaded', function() {
+	var ctx = document.body.dataset.ctx || '';
 	var esc = (window.bitda && window.bitda.esc) || function(s){ return String(s == null ? '' : s); };
 
 	function load() {
@@ -50,40 +50,49 @@ $(function() {
 					+ '</div></td>';
 				html += '</tr>';
 			}
-			$('#catTbody').html(html || '<tr><td colspan="5" class="empty-state">등록된 카테고리가 없습니다.</td></tr>');
+			document.getElementById('catTbody').innerHTML = html || '<tr><td colspan="5" class="empty-state">등록된 카테고리가 없습니다.</td></tr>';
 		}, 'json');
 	}
 
-	$('#btnCatAdd').on('click', function() {
-		var categoryNm = $('#catNewInput').val().trim();
-		if (!categoryNm) { alert('카테고리 이름을 입력하세요.'); return; }
-		$.post(ctx + '/category/doSave.do', { categoryNm: categoryNm }, function(res) {
-			if (res.code === '200') {
-				$('#catNewInput').val('');
-				load();
-			} else {
-				alert(res.message || '카테고리 추가에 실패했습니다.');
-			}
-		}, 'json').fail(function() { alert('요청 처리 중 오류가 발생했습니다.'); });
-	});
+	var btnCatAdd = document.getElementById('btnCatAdd');
+	if (btnCatAdd) {
+		btnCatAdd.addEventListener('click', function() {
+			var categoryNm = document.getElementById('catNewInput').value.trim();
+			if (!categoryNm) { alert('카테고리 이름을 입력하세요.'); return; }
+			$.post(ctx + '/category/doSave.do', { categoryNm: categoryNm }, function(res) {
+				if (res.code === '200') {
+					document.getElementById('catNewInput').value = '';
+					load();
+				} else {
+					alert(res.message || '카테고리 추가에 실패했습니다.');
+				}
+			}, 'json').fail(function() { alert('요청 처리 중 오류가 발생했습니다.'); });
+		});
+	}
 
-	$('#catTbody').on('click', '.cat-edit', function() {
-		var $tr = $(this).closest('tr');
-		var cur = $tr.data('category-nm');
+	var catTbody = document.getElementById('catTbody');
+
+	catTbody.addEventListener('click', function(e) {
+		var editBtn = e.target.closest('.cat-edit');
+		if (!editBtn) { return; }
+		var tr = editBtn.closest('tr');
+		var cur = tr.dataset.categoryNm;
 		var next = prompt('카테고리 이름을 수정하세요 (10자 이내)', cur);
 		if (next == null) { return; }
 		next = next.trim();
 		if (!next) { alert('카테고리 이름을 입력하세요.'); return; }
-		$.post(ctx + '/category/doUpdate.do', { categoryId: $tr.data('category-id'), categoryNm: next }, function(res) {
+		$.post(ctx + '/category/doUpdate.do', { categoryId: tr.dataset.categoryId, categoryNm: next }, function(res) {
 			if (res.code === '200') { load(); }
 			else { alert(res.message || '카테고리 수정에 실패했습니다.'); }
 		}, 'json').fail(function() { alert('요청 처리 중 오류가 발생했습니다.'); });
 	});
 
-	$('#catTbody').on('click', '.cat-del', function() {
-		var $tr = $(this).closest('tr');
-		if (!confirm('"' + $tr.data('category-nm') + '" 카테고리를 삭제하시겠습니까?')) { return; }
-		$.post(ctx + '/category/doDelete.do', { categoryId: $tr.data('category-id') }, function(res) {
+	catTbody.addEventListener('click', function(e) {
+		var delBtn = e.target.closest('.cat-del');
+		if (!delBtn) { return; }
+		var tr = delBtn.closest('tr');
+		if (!confirm('"' + tr.dataset.categoryNm + '" 카테고리를 삭제하시겠습니까?')) { return; }
+		$.post(ctx + '/category/doDelete.do', { categoryId: tr.dataset.categoryId }, function(res) {
 			if (res.code === '200') { load(); }
 			else { alert(res.message || '카테고리 삭제에 실패했습니다.'); }
 		}, 'json').fail(function() { alert('요청 처리 중 오류가 발생했습니다.'); });

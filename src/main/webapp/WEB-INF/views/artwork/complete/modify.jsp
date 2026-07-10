@@ -44,16 +44,18 @@
 </div>
 
 <script>
-$(function() {
-	var ctx = $('body').data('ctx') || '';
-	var $sel = $('#categoryId');
-	var selected = String($sel.data('selected') || '');
+document.addEventListener('DOMContentLoaded', function() {
+	var ctx = document.body.dataset.ctx || '';
+	var sel = document.getElementById('categoryId');
+	var selected = String(sel.dataset.selected || '');
 	$.get(ctx + '/category/doRetrieve.do', function(res) {
 		if (res.code !== '200') { return; }
 		(res.data || []).forEach(function(cItem) {
-			var opt = $('<option>').val(cItem.categoryId).text(cItem.categoryNm);
-			if (String(cItem.categoryId) === selected) { opt.prop('selected', true); }
-			$sel.append(opt);
+			var opt = document.createElement('option');
+			opt.value = cItem.categoryId;
+			opt.textContent = cItem.categoryNm;
+			if (String(cItem.categoryId) === selected) { opt.selected = true; }
+			sel.appendChild(opt);
 		});
 	}, 'json');
 });

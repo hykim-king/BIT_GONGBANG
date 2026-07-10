@@ -47,63 +47,80 @@
 </div>
 
 <script>
-$(function() {
-	var ctx = $('body').data('ctx') || '';
-	var originalNick = $('#nickname').val();
-	var memberId = $('#modifyForm').data('member-id');
+document.addEventListener('DOMContentLoaded', function() {
+	var ctx = document.body.dataset.ctx || '';
+	var nicknameInput = document.getElementById('nickname');
+	var modifyForm = document.getElementById('modifyForm');
+	var nickMsg = document.getElementById('nickMsg');
+	var originalNick = nicknameInput.value;
+	var memberId = modifyForm.dataset.memberId;
 	var nickChecked = true;
 
-	$('#btnCheckNick').on('click', function() {
-		var nickname = $('#nickname').val().trim();
-		if (!nickname) { alert('닉네임을 입력하세요.'); return; }
-		$.post(ctx + '/member/checkNickname.do', { nickname: nickname, memberId: memberId }, function(res) {
-			if (res.code === '200' && res.data === true) {
-				$('#nickMsg').text('사용 가능합니다.').removeClass('fail').addClass('ok');
-				nickChecked = true;
-			} else {
-				$('#nickMsg').text('이미 사용 중입니다.').removeClass('ok').addClass('fail');
-				nickChecked = false;
-			}
-		}, 'json');
-	});
-
-	$('#nickname').on('input', function() {
-		nickChecked = ($(this).val().trim() === originalNick);
-		$('#nickMsg').text('');
-	});
-
-	$('#modifyForm').on('submit', function(e) {
-		e.preventDefault();
-		var pw = $('#password').val();
-		var cpw = $('#confirmPassword').val();
-		if (pw && pw !== cpw) { alert('비밀번호가 일치하지 않습니다.'); return; }
-		if (!nickChecked) { alert('닉네임 중복확인을 해주세요.'); return; }
-
-		$.post(ctx + '/member/doUpdate.do', $(this).serialize(), function(res) {
-			if (res.code === '200') {
-				alert('수정되었습니다.');
-				location.href = ctx + '/member/mypage.do';
-			} else {
-				alert(res.message || '수정에 실패했습니다.');
-			}
-		}, 'json').fail(function() {
-			alert('요청 처리 중 오류가 발생했습니다. 로그인 상태를 확인하세요.');
+	var btnCheckNick = document.getElementById('btnCheckNick');
+	if (btnCheckNick) {
+		btnCheckNick.addEventListener('click', function() {
+			var nickname = nicknameInput.value.trim();
+			if (!nickname) { alert('닉네임을 입력하세요.'); return; }
+			$.post(ctx + '/member/checkNickname.do', { nickname: nickname, memberId: memberId }, function(res) {
+				if (res.code === '200' && res.data === true) {
+					nickMsg.textContent = '사용 가능합니다.';
+					nickMsg.classList.remove('fail');
+					nickMsg.classList.add('ok');
+					nickChecked = true;
+				} else {
+					nickMsg.textContent = '이미 사용 중입니다.';
+					nickMsg.classList.remove('ok');
+					nickMsg.classList.add('fail');
+					nickChecked = false;
+				}
+			}, 'json');
 		});
-	});
+	}
 
-	$('#btnWithdraw').on('click', function() {
-		if (!confirm('정말 탈퇴하시겠습니까?')) return;
-		$.post(ctx + '/member/doDelete.do', function(res) {
-			if (res.code === '200') {
-				alert('탈퇴가 완료되었습니다.');
-				location.href = ctx + '/member/login.do';
-			} else {
-				alert(res.message || '탈퇴에 실패했습니다.');
-			}
-		}, 'json').fail(function() {
-			alert('요청 처리 중 오류가 발생했습니다.');
+	if (nicknameInput) {
+		nicknameInput.addEventListener('input', function() {
+			nickChecked = (this.value.trim() === originalNick);
+			nickMsg.textContent = '';
 		});
-	});
+	}
+
+	if (modifyForm) {
+		modifyForm.addEventListener('submit', function(e) {
+			e.preventDefault();
+			var pw = document.getElementById('password').value;
+			var cpw = document.getElementById('confirmPassword').value;
+			if (pw && pw !== cpw) { alert('비밀번호가 일치하지 않습니다.'); return; }
+			if (!nickChecked) { alert('닉네임 중복확인을 해주세요.'); return; }
+
+			$.post(ctx + '/member/doUpdate.do', window.bitda.serializeForm(this), function(res) {
+				if (res.code === '200') {
+					alert('수정되었습니다.');
+					location.href = ctx + '/member/mypage.do';
+				} else {
+					alert(res.message || '수정에 실패했습니다.');
+				}
+			}, 'json').fail(function() {
+				alert('요청 처리 중 오류가 발생했습니다. 로그인 상태를 확인하세요.');
+			});
+		});
+	}
+
+	var btnWithdraw = document.getElementById('btnWithdraw');
+	if (btnWithdraw) {
+		btnWithdraw.addEventListener('click', function() {
+			if (!confirm('정말 탈퇴하시겠습니까?')) return;
+			$.post(ctx + '/member/doDelete.do', function(res) {
+				if (res.code === '200') {
+					alert('탈퇴가 완료되었습니다.');
+					location.href = ctx + '/member/login.do';
+				} else {
+					alert(res.message || '탈퇴에 실패했습니다.');
+				}
+			}, 'json').fail(function() {
+				alert('요청 처리 중 오류가 발생했습니다.');
+			});
+		});
+	}
 });
 </script>
 <%@ include file="/WEB-INF/views/cmn/footer.jsp" %>

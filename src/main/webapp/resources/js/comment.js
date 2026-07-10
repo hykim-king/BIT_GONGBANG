@@ -9,10 +9,10 @@
  *  본인 판정: 목록 항목의 memberId === data-login-member-id
  *  주의: 비로그인 세션 만료 시 LoginInterceptor 가 302(HTML)를 주므로 .fail 로 떨어짐.
  * ==========================================================================*/
-$(function () {
+document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 
-	var ctx = $('body').data('ctx') || '';
+	var ctx = document.body.dataset.ctx || '';
 	var esc = (window.bitda && window.bitda.esc) || function (s) { return String(s == null ? '' : s); };
 
 	function fmtDt(s) {
@@ -35,43 +35,45 @@ $(function () {
 		return html;
 	}
 
-	function mount($box) {
-		var targetType = $box.data('target-type');
-		var targetId = $box.data('target-id');
-		var loginMemberId = String($box.data('login-member-id') === undefined ? '' : $box.data('login-member-id'));
+	function mount(box) {
+		var targetType = box.dataset.targetType;
+		var targetId = box.dataset.targetId;
+		var loginMemberId = String(box.dataset.loginMemberId === undefined ? '' : box.dataset.loginMemberId);
 
 		function load() {
 			$.post(ctx + '/comment/doRetrieve.do', { targetType: targetType, targetId: targetId }, function (res) {
 				if (res.code !== '200') { return; }
 				var list = res.data || [];
-				$box.find('.cmt-count').text('(' + list.length + ')');
+				box.querySelector('.cmt-count').textContent = '(' + list.length + ')';
 				var html = '';
 				for (var i = 0; i < list.length; i++) {
 					html += itemHtml(list[i], loginMemberId);
 				}
-				$box.find('.cmt-list').html(html || '<li class="cmt-empty">첫 댓글을 남겨보세요.</li>');
+				box.querySelector('.cmt-list').innerHTML = html || '<li class="cmt-empty">첫 댓글을 남겨보세요.</li>';
 			}, 'json');
 		}
 
 		/* 입력 영역: 로그인 시 폼, 비로그인 시 안내 */
 		if (loginMemberId !== '') {
-			$box.find('.cmt-form-area').html(
+			box.querySelector('.cmt-form-area').innerHTML =
 				'<form class="cmt-form" method="post">' +
 				'<div class="row"><input type="text" class="text-input cmt-input" maxlength="1000" placeholder="댓글을 입력하세요 (1~1000자)">' +
 				'<button type="submit" class="btn small">등록</button></div>' +
-				'</form>');
+				'</form>';
 		} else {
-			$box.find('.cmt-form-area').html('<p class="hint">로그인 후 댓글을 작성할 수 있습니다.</p>');
+			box.querySelector('.cmt-form-area').innerHTML = '<p class="hint">로그인 후 댓글을 작성할 수 있습니다.</p>';
 		}
 
 		/* 등록 */
-		$box.on('submit', '.cmt-form', function (e) {
+		box.addEventListener('submit', function (e) {
+			var t = e.target.closest('.cmt-form');
+			if (!t) { return; }
 			e.preventDefault();
-			var content = $box.find('.cmt-input').val().trim();
+			var content = box.querySelector('.cmt-input').value.trim();
 			if (!content) { alert('댓글 내용을 입력하세요.'); return; }
 			$.post(ctx + '/comment/doSave.do', { targetType: targetType, targetId: targetId, content: content }, function (res) {
 				if (res.code === '200') {
-					$box.find('.cmt-input').val('');
+					box.querySelector('.cmt-input').value = '';
 					load();
 				} else if (res.code === '401') {
 					alert('로그인이 필요합니다.');
@@ -84,29 +86,37 @@ $(function () {
 		});
 
 		/* 수정 — 인라인 편집 폼 전환 */
-		$box.on('click', '.cmt-edit', function () {
-			var $item = $(this).closest('.cmt-item');
-			if ($item.find('.cmt-edit-form').length) { return; }
-			var cur = $item.find('.cmt-content').text();
-			$item.find('.cmt-content').hide();
-			$item.find('.cmt-edit-area').html(
+		box.addEventListener('click', function (e) {
+			var t = e.target.closest('.cmt-edit');
+			if (!t) { return; }
+			var item = t.closest('.cmt-item');
+			if (item.querySelector('.cmt-edit-form')) { return; }
+			var cur = item.querySelector('.cmt-content').textContent;
+			item.querySelector('.cmt-content').style.display = 'none';
+			item.querySelector('.cmt-edit-area').innerHTML =
 				'<form class="cmt-edit-form" method="post">' +
 				'<div class="row"><input type="text" class="text-input cmt-edit-input" maxlength="1000">' +
 				'<button type="submit" class="btn small">저장</button>' +
 				'<button type="button" class="btn ghost small cmt-edit-cancel">취소</button></div>' +
-				'</form>');
-			$item.find('.cmt-edit-input').val(cur).focus();
+				'</form>';
+			var input = item.querySelector('.cmt-edit-input');
+			input.value = cur;
+			input.focus();
 		});
-		$box.on('click', '.cmt-edit-cancel', function () {
-			var $item = $(this).closest('.cmt-item');
-			$item.find('.cmt-edit-area').empty();
-			$item.find('.cmt-content').show();
+		box.addEventListener('click', function (e) {
+			var t = e.target.closest('.cmt-edit-cancel');
+			if (!t) { return; }
+			var item = t.closest('.cmt-item');
+			item.querySelector('.cmt-edit-area').replaceChildren();
+			item.querySelector('.cmt-content').style.display = '';
 		});
-		$box.on('submit', '.cmt-edit-form', function (e) {
+		box.addEventListener('submit', function (e) {
+			var t = e.target.closest('.cmt-edit-form');
+			if (!t) { return; }
 			e.preventDefault();
-			var $item = $(this).closest('.cmt-item');
-			var commentId = $item.data('comment-id');
-			var content = $item.find('.cmt-edit-input').val().trim();
+			var item = t.closest('.cmt-item');
+			var commentId = item.dataset.commentId;
+			var content = item.querySelector('.cmt-edit-input').value.trim();
 			if (!content) { alert('댓글 내용을 입력하세요.'); return; }
 			$.post(ctx + '/comment/doUpdate.do', { commentId: commentId, content: content }, function (res) {
 				if (res.code === '200') {
@@ -120,9 +130,11 @@ $(function () {
 		});
 
 		/* 삭제 */
-		$box.on('click', '.cmt-del', function () {
+		box.addEventListener('click', function (e) {
+			var t = e.target.closest('.cmt-del');
+			if (!t) { return; }
 			if (!confirm('댓글을 삭제하시겠습니까?')) { return; }
-			var commentId = $(this).closest('.cmt-item').data('comment-id');
+			var commentId = t.closest('.cmt-item').dataset.commentId;
 			$.post(ctx + '/comment/doDelete.do', { commentId: commentId }, function (res) {
 				if (res.code === '200') {
 					load();
@@ -137,5 +149,7 @@ $(function () {
 		load();
 	}
 
-	$('.comment-box').each(function () { mount($(this)); });
+	document.querySelectorAll('.comment-box').forEach(function (box) {
+		mount(box);
+	});
 });

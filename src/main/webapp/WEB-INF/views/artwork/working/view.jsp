@@ -115,8 +115,8 @@
 </c:if>
 
 <script>
-$(function() {
-	var ctx = $('body').data('ctx') || '';
+document.addEventListener('DOMContentLoaded', function() {
+	var ctx = document.body.dataset.ctx || '';
 	var esc = (window.bitda && window.bitda.esc) || String;
 	var artworkId = ${vo.artworkId};
 
@@ -124,53 +124,70 @@ $(function() {
 	$.post(ctx + '/file/doRetrieve.do', { targetType: 'ARTWORK', targetId: artworkId }, function(res) {
 		if (res.code !== '200' || !(res.data || []).length) { return; }
 		var files = res.data;
-		$('#heroArea').html('<img class="detail-hero" id="heroImg" src="' + ctx + '/file/download.do?fileId=' + files[0].fileId + '" alt="">');
+		document.getElementById('heroArea').innerHTML = '<img class="detail-hero" id="heroImg" src="' + ctx + '/file/download.do?fileId=' + files[0].fileId + '" alt="">';
 		var th = '';
 		files.forEach(function(f) {
 			th += '<img src="' + ctx + '/file/download.do?fileId=' + f.fileId + '" class="' + (f.isRep === 'Y' ? 'rep' : '') + '" data-file-id="' + f.fileId + '" alt="' + esc(f.orgFileNm) + '">';
 		});
-		$('#thumbArea').html(th);
+		document.getElementById('thumbArea').innerHTML = th;
 	}, 'json');
-	$(document).on('click', '#thumbArea img', function() {
-		$('#heroImg').attr('src', ctx + '/file/download.do?fileId=' + $(this).data('file-id'));
+	document.addEventListener('click', function(e) {
+		var img = e.target.closest('#thumbArea img');
+		if (!img) { return; }
+		var heroImg = document.getElementById('heroImg');
+		if (heroImg) { heroImg.setAttribute('src', ctx + '/file/download.do?fileId=' + img.dataset.fileId); }
 	});
 
 	/* 삭제(본인/관리자) */
-	$('#btnArtworkDelete').on('click', function() {
-		if (!confirm('작품을 삭제하시겠습니까? 첨부/댓글/좋아요/작업일지가 함께 삭제됩니다.')) { return; }
-		$('<form>', { method: 'post', action: ctx + '/artwork/doDelete' })
-			.append($('<input>', { type: 'hidden', name: 'artworkId', value: artworkId }))
-			.appendTo('body').trigger('submit');
-	});
+	var btnArtworkDelete = document.getElementById('btnArtworkDelete');
+	if (btnArtworkDelete) {
+		btnArtworkDelete.addEventListener('click', function() {
+			if (!confirm('작품을 삭제하시겠습니까? 첨부/댓글/좋아요/작업일지가 함께 삭제됩니다.')) { return; }
+			var form = document.createElement('form');
+			form.method = 'post';
+			form.action = ctx + '/artwork/doDelete';
+			var input = document.createElement('input');
+			input.type = 'hidden';
+			input.name = 'artworkId';
+			input.value = artworkId;
+			form.appendChild(input);
+			document.body.appendChild(form);
+			form.submit();
+		});
+	}
 
 	/* 작업일지 등록: 저장(PRG) → 최종 URL 의 newEntryId 로 지연 이미지 업로드 → 이동 */
-	$('#entryRegForm').on('submit', function(e) {
-		e.preventDefault();
-		if (!$('#entryContent').val().trim()) { alert('작업 내용을 입력하세요.'); return; }
-		var $form = $(this);
-		var nativeXhr = $.ajaxSettings.xhr();
-		$.ajax({
-			url: $form.attr('action'), method: 'POST', data: $form.serialize(),
-			xhr: function() { return nativeXhr; }
-		}).always(function() {
-			var finalUrl = nativeXhr.responseURL || '';
-			var m = finalUrl.match(/newEntryId=(\d+)/);
-			if (!m) {
-				alert('작업일지 등록 처리 중 오류가 발생했습니다.');
-				return;
-			}
-			var up = window.bitda.uploader.get($form.find('.upload-widget')[0]);
-			var job = up ? up.uploadTo('ARTWORK_ENTRY', m[1]) : null;
-			if (job) { job.always(function() { location.href = finalUrl; }); }
-			else { location.href = finalUrl; }
+	var entryRegForm = document.getElementById('entryRegForm');
+	if (entryRegForm) {
+		entryRegForm.addEventListener('submit', function(e) {
+			e.preventDefault();
+			var entryContent = document.getElementById('entryContent');
+			if (!entryContent.value.trim()) { alert('작업 내용을 입력하세요.'); return; }
+			var form = this;
+			var nativeXhr = $.ajaxSettings.xhr();
+			$.ajax({
+				url: form.getAttribute('action'), method: 'POST', data: window.bitda.serializeForm(form),
+				xhr: function() { return nativeXhr; }
+			}).always(function() {
+				var finalUrl = nativeXhr.responseURL || '';
+				var m = finalUrl.match(/newEntryId=(\d+)/);
+				if (!m) {
+					alert('작업일지 등록 처리 중 오류가 발생했습니다.');
+					return;
+				}
+				var up = window.bitda.uploader.get(form.querySelector('.upload-widget'));
+				var job = up ? up.uploadTo('ARTWORK_ENTRY', m[1]) : null;
+				if (job) { job.always(function() { location.href = finalUrl; }); }
+				else { location.href = finalUrl; }
+			});
 		});
-	});
+	}
 
 	/* 미니 캘린더: 타임라인의 reg_dt 수집 → 월 그리드 렌더, 클릭 시 해당 일차로 스크롤 */
 	var entryDates = {};
-	$('.entry-item').each(function() {
-		var d = String($(this).data('reg-dt') || '');
-		if (d) { entryDates[d] = $(this).attr('id'); }
+	document.querySelectorAll('.entry-item').forEach(function(item) {
+		var d = String(item.dataset.regDt || '');
+		if (d) { entryDates[d] = item.id; }
 	});
 	var calBase = new Date();
 	var dateKeys = Object.keys(entryDates).sort();
@@ -179,7 +196,7 @@ $(function() {
 
 	function pad(n) { return (n < 10 ? '0' : '') + n; }
 	function renderCal() {
-		$('#calTitle').text(calY + '년 ' + (calM + 1) + '월');
+		document.getElementById('calTitle').textContent = calY + '년 ' + (calM + 1) + '월';
 		var first = new Date(calY, calM, 1).getDay();
 		var days = new Date(calY, calM + 1, 0).getDate();
 		var html = '';
@@ -189,13 +206,17 @@ $(function() {
 			var key = calY + '-' + pad(calM + 1) + '-' + pad(d);
 			html += '<span class="cal-day' + (entryDates[key] ? ' has-entry' : '') + '" data-key="' + key + '">' + d + '</span>';
 		}
-		$('#calGrid').html(html);
+		document.getElementById('calGrid').innerHTML = html;
 	}
 	renderCal();
-	$('#calPrev').on('click', function() { calM--; if (calM < 0) { calM = 11; calY--; } renderCal(); });
-	$('#calNext').on('click', function() { calM++; if (calM > 11) { calM = 0; calY++; } renderCal(); });
-	$(document).on('click', '.cal-day.has-entry', function() {
-		var id = entryDates[$(this).data('key')];
+	var calPrev = document.getElementById('calPrev');
+	if (calPrev) { calPrev.addEventListener('click', function() { calM--; if (calM < 0) { calM = 11; calY--; } renderCal(); }); }
+	var calNext = document.getElementById('calNext');
+	if (calNext) { calNext.addEventListener('click', function() { calM++; if (calM > 11) { calM = 0; calY++; } renderCal(); }); }
+	document.addEventListener('click', function(e) {
+		var cell = e.target.closest('.cal-day.has-entry');
+		if (!cell) { return; }
+		var id = entryDates[cell.dataset.key];
 		if (id) { document.getElementById(id).scrollIntoView({ behavior: 'smooth' }); }
 	});
 
@@ -204,8 +225,10 @@ $(function() {
 		$.post(ctx + '/file/doRetrieve.do', { targetType: 'ARTWORK', targetId: artworkId }, function(res) {
 			if (res.code !== '200') { return; }
 			var files = res.data || [];
+			var grid = document.getElementById('completePhotoGrid');
+			if (!grid) { return; }
 			if (!files.length) {
-				$('#completePhotoGrid').html('<p class="hint">등록된 작품 사진이 없습니다. 사진 없이도 완성 등록은 가능합니다.</p>');
+				grid.innerHTML = '<p class="hint">등록된 작품 사진이 없습니다. 사진 없이도 완성 등록은 가능합니다.</p>';
 				return;
 			}
 			var html = '';
@@ -214,15 +237,21 @@ $(function() {
 					+ (f.isRep === 'Y' ? '<span class="rep-mark">대표</span>' : '')
 					+ '<img src="' + ctx + '/file/download.do?fileId=' + f.fileId + '" alt="' + esc(f.orgFileNm) + '"></div>';
 			});
-			$('#completePhotoGrid').html(html);
+			grid.innerHTML = html;
 		}, 'json');
 	}
-	$('#btnOpenComplete').on('click', function() {
-		loadCompletePhotos();
-		$('#completeModal').addClass('open');
-	});
-	$(document).on('click', '#completePhotoGrid .photo-slot:not(.rep)', function() {
-		$.post(ctx + '/file/setRep.do', { fileId: $(this).data('file-id') }, function(res) {
+	var btnOpenComplete = document.getElementById('btnOpenComplete');
+	if (btnOpenComplete) {
+		btnOpenComplete.addEventListener('click', function() {
+			loadCompletePhotos();
+			var completeModal = document.getElementById('completeModal');
+			if (completeModal) { completeModal.classList.add('open'); }
+		});
+	}
+	document.addEventListener('click', function(e) {
+		var slot = e.target.closest('#completePhotoGrid .photo-slot:not(.rep)');
+		if (!slot) { return; }
+		$.post(ctx + '/file/setRep.do', { fileId: slot.dataset.fileId }, function(res) {
 			if (res.code === '200') { loadCompletePhotos(); }
 			else { alert(res.message || '대표 지정에 실패했습니다.'); }
 		}, 'json');

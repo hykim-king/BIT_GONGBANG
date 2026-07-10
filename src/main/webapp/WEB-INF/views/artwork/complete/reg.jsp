@@ -49,12 +49,14 @@
 </div>
 
 <script>
-$(function() {
-	var ctx = $('body').data('ctx') || '';
+document.addEventListener('DOMContentLoaded', function() {
+	var ctx = document.body.dataset.ctx || '';
 
 	/* 유형 전환: 공개작업 선택 시 working/reg 로 이동 */
-	$('input[name=regType]').on('change', function() {
-		if (this.value === 'working') { location.href = ctx + '/artwork/working/reg'; }
+	document.querySelectorAll('input[name=regType]').forEach(function(radio) {
+		radio.addEventListener('change', function() {
+			if (this.value === 'working') { location.href = ctx + '/artwork/working/reg'; }
+		});
 	});
 
 	/* 카테고리 드롭다운 로드 */
@@ -62,37 +64,40 @@ $(function() {
 		if (res.code !== '200') { return; }
 		var esc = (window.bitda && window.bitda.esc) || String;
 		(res.data || []).forEach(function(cItem) {
-			$('#categoryId').append('<option value="' + cItem.categoryId + '">' + esc(cItem.categoryNm) + '</option>');
+			document.getElementById('categoryId').insertAdjacentHTML('beforeend', '<option value="' + cItem.categoryId + '">' + esc(cItem.categoryNm) + '</option>');
 		});
 	}, 'json');
 
 	/* 등록: 저장(PRG) → redirect 최종 URL 의 artworkId 로 지연 업로드 → 상세 이동.
 	   native xhr.responseURL 로 최종 URL 확보(jqXHR 미지원 + follow된 상세가 404여도 URL 은 유효) */
-	$('#artworkRegForm').on('submit', function(e) {
-		e.preventDefault();
-		if (!$('#categoryId').val()) { alert('카테고리를 선택하세요.'); return; }
-		var $form = $(this);
-		var nativeXhr = $.ajaxSettings.xhr();
-		$.ajax({
-			url: $form.attr('action'), method: 'POST', data: $form.serialize(),
-			xhr: function() { return nativeXhr; }
-		}).always(function() {
-			var finalUrl = nativeXhr.responseURL || '';
-			var m = finalUrl.match(/artworkId=(\d+)/);
-			if (!m) {
-				alert('등록 처리 중 오류가 발생했습니다. 로그인 상태를 확인하세요.');
-				return;
-			}
-			var artworkId = m[1];
-			var up = window.bitda.uploader.get($('.upload-widget')[0]);
-			var job = up ? up.uploadTo('ARTWORK', artworkId) : null;
-			if (job) {
-				job.always(function() { location.href = finalUrl; });
-			} else {
-				location.href = finalUrl;
-			}
+	var artworkRegForm = document.getElementById('artworkRegForm');
+	if (artworkRegForm) {
+		artworkRegForm.addEventListener('submit', function(e) {
+			e.preventDefault();
+			if (!document.getElementById('categoryId').value) { alert('카테고리를 선택하세요.'); return; }
+			var form = this;
+			var nativeXhr = $.ajaxSettings.xhr();
+			$.ajax({
+				url: form.getAttribute('action'), method: 'POST', data: window.bitda.serializeForm(form),
+				xhr: function() { return nativeXhr; }
+			}).always(function() {
+				var finalUrl = nativeXhr.responseURL || '';
+				var m = finalUrl.match(/artworkId=(\d+)/);
+				if (!m) {
+					alert('등록 처리 중 오류가 발생했습니다. 로그인 상태를 확인하세요.');
+					return;
+				}
+				var artworkId = m[1];
+				var up = window.bitda.uploader.get(document.querySelector('.upload-widget'));
+				var job = up ? up.uploadTo('ARTWORK', artworkId) : null;
+				if (job) {
+					job.always(function() { location.href = finalUrl; });
+				} else {
+					location.href = finalUrl;
+				}
+			});
 		});
-	});
+	}
 });
 </script>
 <%@ include file="/WEB-INF/views/cmn/footer.jsp" %>

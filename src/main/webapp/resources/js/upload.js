@@ -10,10 +10,10 @@
  *  - 즉시(targetId 있음): 선택 즉시 업로드, 목록은 서버 기준
  *  - 지연(targetId 없음): File 객체 보관+로컬 미리보기, bitda.uploader.uploadTo(...)로 일괄 업로드
  * ==========================================================================*/
-$(function () {
+document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 
-	var ctx = $('body').data('ctx') || '';
+	var ctx = document.body.dataset.ctx || '';
 	var esc = (window.bitda && window.bitda.esc) || function (s) { return String(s == null ? '' : s); };
 	var MAX = 9;
 	var ALLOWED = /\.(jpe?g|png|webp)$/i;
@@ -21,19 +21,19 @@ $(function () {
 	window.bitda = window.bitda || {};
 	window.bitda.uploader = window.bitda.uploader || {};
 
-	function mount($w) {
-		var targetType = $w.data('target-type');
-		var targetId = $w.data('target-id');       /* ''(지연) 또는 숫자(즉시) */
-		var editable = String($w.data('editable')) === 'true';
+	function mount(w) {
+		var targetType = w.dataset.targetType;
+		var targetId = w.dataset.targetId;       /* ''(지연) 또는 숫자(즉시) */
+		var editable = String(w.dataset.editable) === 'true';
 		var deferred = (targetId === '' || targetId === undefined || targetId === null);
 		var pending = [];                          /* 지연 모드 File 보관 */
 
 		if (editable) {
-			$w.find('.up-pick-label').show();
-			$w.find('.up-hint').show();
+			w.querySelector('.up-pick-label').style.display = '';
+			w.querySelector('.up-hint').style.display = '';
 		}
 
-		function setCount(n) { $w.find('.up-count').text('(' + n + '/' + MAX + ')'); }
+		function setCount(n) { w.querySelector('.up-count').textContent = '(' + n + '/' + MAX + ')'; }
 
 		/* ---------- 즉시 모드: 서버 목록 렌더 ---------- */
 		function loadServer() {
@@ -55,7 +55,7 @@ $(function () {
 					}
 					html += '</div>';
 				}
-				$w.find('.up-grid').html(html || '<p class="hint">등록된 이미지가 없습니다.</p>');
+				w.querySelector('.up-grid').innerHTML = html || '<p class="hint">등록된 이미지가 없습니다.</p>';
 			}, 'json');
 		}
 
@@ -70,10 +70,10 @@ $(function () {
 				html += '<div class="up-item-btns"><a class="up-remove-local">삭제</a></div>';
 				html += '</div>';
 			}
-			$w.find('.up-grid').html(html || '<p class="hint">선택된 이미지가 없습니다.</p>');
+			w.querySelector('.up-grid').innerHTML = html || '<p class="hint">선택된 이미지가 없습니다.</p>';
 		}
 
-		function currentCount() { return deferred ? pending.length : $w.find('.up-item').length; }
+		function currentCount() { return deferred ? pending.length : w.querySelectorAll('.up-item').length; }
 
 		function validateFiles(files, remain) {
 			if (files.length > remain) {
@@ -94,9 +94,11 @@ $(function () {
 		}
 
 		/* ---------- 파일 선택 ---------- */
-		$w.on('change', '.up-input', function () {
-			var files = Array.prototype.slice.call(this.files || []);
-			this.value = '';
+		w.addEventListener('change', function (e) {
+			var t = e.target.closest('.up-input');
+			if (!t) { return; }
+			var files = Array.prototype.slice.call(t.files || []);
+			t.value = '';
 			if (!files.length) { return; }
 			if (!validateFiles(files, MAX - currentCount())) { return; }
 
@@ -132,16 +134,20 @@ $(function () {
 		}
 
 		/* ---------- 즉시 모드: 대표지정/삭제 ---------- */
-		$w.on('click', '.up-setrep', function () {
-			var fileId = $(this).closest('.up-item').data('file-id');
+		w.addEventListener('click', function (e) {
+			var t = e.target.closest('.up-setrep');
+			if (!t) { return; }
+			var fileId = t.closest('.up-item').dataset.fileId;
 			$.post(ctx + '/file/setRep.do', { fileId: fileId }, function (res) {
 				if (res.code === '200') { loadServer(); }
 				else { alert(res.message || '대표 지정에 실패했습니다.'); }
 			}, 'json').fail(function () { alert('요청 처리 중 오류가 발생했습니다.'); });
 		});
-		$w.on('click', '.up-remove', function () {
+		w.addEventListener('click', function (e) {
+			var t = e.target.closest('.up-remove');
+			if (!t) { return; }
 			if (!confirm('이미지를 삭제하시겠습니까?')) { return; }
-			var fileId = $(this).closest('.up-item').data('file-id');
+			var fileId = t.closest('.up-item').dataset.fileId;
 			$.post(ctx + '/file/remove.do', { fileId: fileId }, function (res) {
 				if (res.code === '200') { loadServer(); }
 				else { alert(res.message || '삭제에 실패했습니다.'); }
@@ -149,15 +155,17 @@ $(function () {
 		});
 
 		/* ---------- 지연 모드: 로컬 삭제 ---------- */
-		$w.on('click', '.up-remove-local', function () {
-			var idx = $(this).closest('.up-item').data('idx');
+		w.addEventListener('click', function (e) {
+			var t = e.target.closest('.up-remove-local');
+			if (!t) { return; }
+			var idx = Number(t.closest('.up-item').dataset.idx);
 			URL.revokeObjectURL(pending[idx].url);
 			pending.splice(idx, 1);
 			renderPending();
 		});
 
 		/* ---------- 외부 API (3단계 글쓰기 오케스트레이션) ---------- */
-		$w.data('bitdaUploader', {
+		w.bitdaUploaderApi = {
 			count: currentCount,
 			pendingCount: function () { return pending.length; },
 			/* 지연 보관분을 지정 대상으로 일괄 업로드. jqXHR(Promise) 반환, 보관분 없으면 null */
@@ -169,13 +177,13 @@ $(function () {
 					pending = [];
 				});
 			}
-		});
+		};
 
 		/* 초기 로드 */
 		if (deferred) { renderPending(); } else { loadServer(); }
 	}
 
-	window.bitda.uploader.get = function (el) { return $(el).data('bitdaUploader'); };
+	window.bitda.uploader.get = function (el) { return el.bitdaUploaderApi; };
 
-	$('.upload-widget').each(function () { mount($(this)); });
+	document.querySelectorAll('.upload-widget').forEach(function (el) { mount(el); });
 });

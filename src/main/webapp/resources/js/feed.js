@@ -8,10 +8,10 @@
  * 응답: MessageVO { code:'200', data: List<ArtworkVO(cardColumns)> }
  * 카드 클릭 → /artwork/complete/view?artworkId=N (완성작 피드)
  * ==========================================================================*/
-$(function () {
+document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 
-	var ctx = $('body').data('ctx') || '';
+	var ctx = document.body.dataset.ctx || '';
 	var esc = (window.bitda && window.bitda.esc) || function (s) { return String(s == null ? '' : s); };
 	var PAGE_SIZE = 12;
 
@@ -32,18 +32,17 @@ $(function () {
 	}
 	window.bitda.cardHtml = cardHtml;
 
-	$('.masonry-feed').each(function () {
-		var $feed = $(this);
-		var endpoint = $feed.data('endpoint');
-		var useRank = String($feed.data('rank')) === 'true';
-		var $grid = $feed.find('.masonry');
-		var $sentinel = $feed.find('.feed-sentinel');
+	document.querySelectorAll('.masonry-feed').forEach(function (feed) {
+		var endpoint = feed.dataset.endpoint;
+		var useRank = String(feed.dataset.rank) === 'true';
+		var grid = feed.querySelector('.masonry');
+		var sentinel = feed.querySelector('.feed-sentinel');
 		var pageNo = 1;                                   /* 1페이지는 서버 렌더 */
 		var loading = false;
-		var done = $grid.find('.art-card').length < PAGE_SIZE;   /* 첫 장부터 부족하면 끝 */
+		var done = grid.querySelectorAll('.art-card').length < PAGE_SIZE;   /* 첫 장부터 부족하면 끝 */
 
 		function updateSentinel() {
-			$sentinel.text(done ? '작품을 모두 확인했습니다' : '스크롤하면 더 불러옵니다…');
+			if (sentinel) { sentinel.textContent = done ? '작품을 모두 확인했습니다' : '스크롤하면 더 불러옵니다…'; }
 		}
 		updateSentinel();
 
@@ -54,22 +53,22 @@ $(function () {
 				if (res.code !== '200') { loading = false; return; }
 				var list = res.data || [];
 				pageNo += 1;
-				var base = $grid.find('.art-card').length;
+				var base = grid.querySelectorAll('.art-card').length;
 				var html = '';
 				for (var i = 0; i < list.length; i++) {
 					html += cardHtml(list[i], useRank ? (base + i + 1) : 0);
 				}
-				$grid.append(html);
+				grid.insertAdjacentHTML('beforeend', html);
 				if (list.length < PAGE_SIZE) { done = true; }
 				updateSentinel();
 				loading = false;
 			}, 'json').fail(function () { loading = false; });
 		}
 
-		if ('IntersectionObserver' in window && $sentinel.length) {
+		if ('IntersectionObserver' in window && sentinel) {
 			new IntersectionObserver(function (entries) {
 				if (entries[0].isIntersecting) { loadNext(); }
-			}, { rootMargin: '300px' }).observe($sentinel[0]);
+			}, { rootMargin: '300px' }).observe(sentinel);
 		}
 	});
 });

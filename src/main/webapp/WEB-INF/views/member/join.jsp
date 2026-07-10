@@ -42,67 +42,84 @@
 </div>
 
 <script>
-$(function() {
-	var ctx = $('body').data('ctx') || '';
+document.addEventListener('DOMContentLoaded', function () {
+	var ctx = document.body.dataset.ctx || '';
 	var emailChecked = false;
 	var nickChecked = false;
 
-	function postCheck(url, data, $msg, onOk) {
+	function postCheck(url, data, msg, onOk) {
 		$.post(url, data, function(res) {
 			if (res.code === '200' && res.data === true) {
-				$msg.text('사용 가능합니다.').removeClass('fail').addClass('ok');
+				msg.textContent = '사용 가능합니다.';
+				msg.classList.remove('fail');
+				msg.classList.add('ok');
 				onOk(true);
 			} else {
-				$msg.text('이미 사용 중입니다.').removeClass('ok').addClass('fail');
+				msg.textContent = '이미 사용 중입니다.';
+				msg.classList.remove('ok');
+				msg.classList.add('fail');
 				onOk(false);
 			}
 		}, 'json').fail(function() {
-			$msg.text('확인 중 오류가 발생했습니다.').removeClass('ok').addClass('fail');
+			msg.textContent = '확인 중 오류가 발생했습니다.';
+			msg.classList.remove('ok');
+			msg.classList.add('fail');
 			onOk(false);
 		});
 	}
 
-	$('#btnCheckEmail').on('click', function() {
-		var email = $('#email').val().trim();
-		if (!email) { alert('이메일을 입력하세요.'); return; }
-		postCheck(ctx + '/member/checkEmail.do', { email: email }, $('#emailMsg'), function(ok) {
-			emailChecked = ok;
+	var btnCheckEmail = document.getElementById('btnCheckEmail');
+	if (btnCheckEmail) {
+		btnCheckEmail.addEventListener('click', function () {
+			var email = document.getElementById('email').value.trim();
+			if (!email) { alert('이메일을 입력하세요.'); return; }
+			postCheck(ctx + '/member/checkEmail.do', { email: email }, document.getElementById('emailMsg'), function (ok) {
+				emailChecked = ok;
+			});
+		});
+	}
+
+	var btnCheckNick = document.getElementById('btnCheckNick');
+	if (btnCheckNick) {
+		btnCheckNick.addEventListener('click', function () {
+			var nickname = document.getElementById('nickname').value.trim();
+			if (!nickname) { alert('닉네임을 입력하세요.'); return; }
+			postCheck(ctx + '/member/checkNickname.do', { nickname: nickname }, document.getElementById('nickMsg'), function (ok) {
+				nickChecked = ok;
+			});
+		});
+	}
+
+	document.querySelectorAll('#email, #nickname').forEach(function (el) {
+		el.addEventListener('input', function () {
+			if (this.id === 'email') emailChecked = false;
+			if (this.id === 'nickname') nickChecked = false;
 		});
 	});
 
-	$('#btnCheckNick').on('click', function() {
-		var nickname = $('#nickname').val().trim();
-		if (!nickname) { alert('닉네임을 입력하세요.'); return; }
-		postCheck(ctx + '/member/checkNickname.do', { nickname: nickname }, $('#nickMsg'), function(ok) {
-			nickChecked = ok;
-		});
-	});
-
-	$('#email, #nickname').on('input', function() {
-		if (this.id === 'email') emailChecked = false;
-		if (this.id === 'nickname') nickChecked = false;
-	});
-
-	$('#pageJoinForm').on('submit', function(e) {
-		e.preventDefault();
-		if ($('#password').val() !== $('#confirmPassword').val()) {
-			alert('비밀번호가 일치하지 않습니다.');
-			return;
-		}
-		if (!emailChecked) { alert('이메일 중복확인을 해주세요.'); return; }
-		if (!nickChecked) { alert('닉네임 중복확인을 해주세요.'); return; }
-
-		$.post(ctx + '/member/doSave.do', $(this).serialize(), function(res) {
-			if (res.code === '200') {
-				alert('가입이 완료되었습니다.');
-				location.href = ctx + '/member/login.do';
-			} else {
-				alert(res.message || '가입에 실패했습니다.');
+	var pageJoinForm = document.getElementById('pageJoinForm');
+	if (pageJoinForm) {
+		pageJoinForm.addEventListener('submit', function (e) {
+			e.preventDefault();
+			if (document.getElementById('password').value !== document.getElementById('confirmPassword').value) {
+				alert('비밀번호가 일치하지 않습니다.');
+				return;
 			}
-		}, 'json').fail(function() {
-			alert('가입 처리 중 오류가 발생했습니다.');
+			if (!emailChecked) { alert('이메일 중복확인을 해주세요.'); return; }
+			if (!nickChecked) { alert('닉네임 중복확인을 해주세요.'); return; }
+
+			$.post(ctx + '/member/doSave.do', window.bitda.serializeForm(this), function(res) {
+				if (res.code === '200') {
+					alert('가입이 완료되었습니다.');
+					location.href = ctx + '/member/login.do';
+				} else {
+					alert(res.message || '가입에 실패했습니다.');
+				}
+			}, 'json').fail(function() {
+				alert('가입 처리 중 오류가 발생했습니다.');
+			});
 		});
-	});
+	}
 });
 </script>
 <%@ include file="/WEB-INF/views/cmn/footer.jsp" %>

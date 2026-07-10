@@ -5,33 +5,32 @@
  * 백엔드: POST /like/toggle.do {targetType,targetId} → {code,data:{liked,count}} (401 미로그인)
  *        POST /like/myLikes.do → data:List<LikeVO> (로그인 시 초기 하트 상태 구성)
  * ==========================================================================*/
-$(function () {
+document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 
-	var ctx = $('body').data('ctx') || '';
-	var loggedIn = $('body').data('login-member-id') !== undefined && String($('body').data('login-member-id')) !== '';
+	var ctx = document.body.dataset.ctx || '';
+	var loggedIn = document.body.dataset.loginMemberId !== undefined && String(document.body.dataset.loginMemberId) !== '';
 
-	function render($btn, liked, count) {
-		$btn.toggleClass('liked', !!liked);
-		$btn.find('.like-count').text(count);
-		$btn.find('.like-heart').html(liked ? '&#10084;' : '&#9825;');
+	function render(btn, liked, count) {
+		btn.classList.toggle('liked', !!liked);
+		btn.querySelector('.like-count').textContent = count;
+		btn.querySelector('.like-heart').innerHTML = liked ? '&#10084;' : '&#9825;';
 	}
 
-	var $btns = $('.like-btn');
-	if (!$btns.length) { return; }
+	var btns = document.querySelectorAll('.like-btn');
+	if (!btns.length) { return; }
 
 	/* 초기 카운트: data-count 있으면 서버 렌더값, 없으면 count.do 조회.
 	   로그인 시 내 좋아요 목록으로 하트 상태 반영 */
-	$btns.each(function () {
-		var $b = $(this);
-		if ($b.data('count') !== undefined) {
-			render($b, false, $b.data('count'));
+	btns.forEach(function (b) {
+		if (b.dataset.count !== undefined) {
+			render(b, false, b.dataset.count);
 		} else {
-			render($b, false, 0);
+			render(b, false, 0);
 			$.post(ctx + '/like/count.do', {
-				targetType: $b.data('target-type'), targetId: $b.data('target-id')
+				targetType: b.dataset.targetType, targetId: b.dataset.targetId
 			}, function (res) {
-				if (res.code === '200') { render($b, $b.hasClass('liked'), res.data); }
+				if (res.code === '200') { render(b, b.classList.contains('liked'), res.data); }
 			}, 'json');
 		}
 	});
@@ -41,22 +40,22 @@ $(function () {
 			if (res.code !== '200') { return; }
 			var mine = {};
 			(res.data || []).forEach(function (l) { mine[l.targetType + ':' + l.targetId] = true; });
-			$btns.each(function () {
-				var $b = $(this);
-				if (mine[$b.data('target-type') + ':' + $b.data('target-id')]) {
-					render($b, true, $b.find('.like-count').text());
+			btns.forEach(function (b) {
+				if (mine[b.dataset.targetType + ':' + b.dataset.targetId]) {
+					render(b, true, b.querySelector('.like-count').textContent);
 				}
 			});
 		}, 'json');
 	}
 
-	$(document).on('click', '.like-btn', function () {
-		var $b = $(this);
+	document.addEventListener('click', function (e) {
+		var b = e.target.closest('.like-btn');
+		if (!b) { return; }
 		$.post(ctx + '/like/toggle.do', {
-			targetType: $b.data('target-type'), targetId: $b.data('target-id')
+			targetType: b.dataset.targetType, targetId: b.dataset.targetId
 		}, function (res) {
 			if (res.code === '200') {
-				render($b, res.data.liked, res.data.count);
+				render(b, res.data.liked, res.data.count);
 			} else if (res.code === '401') {
 				alert('로그인이 필요합니다.');
 			} else {

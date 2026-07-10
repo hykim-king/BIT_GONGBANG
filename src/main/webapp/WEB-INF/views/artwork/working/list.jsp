@@ -71,16 +71,18 @@
 </c:if>
 
 <script>
-$(function() {
-	var ctx = $('body').data('ctx') || '';
-	var $sel = $('#categoryFilter');
-	var selected = String($sel.data('selected') || '0');
+document.addEventListener('DOMContentLoaded', function() {
+	var ctx = document.body.dataset.ctx || '';
+	var sel = document.getElementById('categoryFilter');
+	var selected = String(sel.dataset.selected || '0');
 	$.get(ctx + '/category/doRetrieve.do', function(res) {
 		if (res.code !== '200') { return; }
 		(res.data || []).forEach(function(cItem) {
-			var opt = $('<option>').val(cItem.categoryId).text(cItem.categoryNm);
-			if (String(cItem.categoryId) === selected) { opt.prop('selected', true); }
-			$sel.append(opt);
+			var opt = document.createElement('option');
+			opt.value = cItem.categoryId;
+			opt.textContent = cItem.categoryNm;
+			if (String(cItem.categoryId) === selected) { opt.selected = true; }
+			sel.appendChild(opt);
 		});
 	}, 'json');
 });
