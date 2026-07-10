@@ -7,7 +7,7 @@
     <c:set var="upTargetId" value=""/>                     (지연 모드 — 글쓰기: 저장 후 업로드)
     <c:set var="upEditable" value="true"/>                 (본인/작성 화면에서만 true)
     <%@ include file="/WEB-INF/views/file/upload_widget.jsp" %>
-  - 렌더링/이벤트는 resources/js/upload.js 가 .upload-widget 단위로 자동 마운트.
+  - 렌더링/이벤트는 resources/assets/js/file/upload.js 가 .upload-widget 단위로 자동 마운트.
   - 지연 모드: 파일을 위젯이 들고 있다가 bitda.uploader.uploadTo($el, targetType, targetId)
     호출 시 일괄 업로드(3단계 글쓰기 오케스트레이션용).
   - 규칙: 대상당 최대 9장(서버도 검증), 첫 업로드 자동 대표(1번 슬롯), 대표=setRep 슬롯 교환.

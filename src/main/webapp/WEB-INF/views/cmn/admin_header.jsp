@@ -17,9 +17,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><c:out value="${empty pageTitle ? '빚다 관리자' : pageTitle}"/></title>
-<link rel="stylesheet" href="${ctx}/resources/css/common.css">
+<link rel="stylesheet" href="${ctx}/resources/assets/css/common.css">
 <script src="${ctx}/resources/assets/js/jquery-4.0.0.js"></script>
-<script src="${ctx}/resources/js/common.js"></script>
+<script src="${ctx}/resources/assets/js/cmn/common.js"></script>
 </head>
 <body data-ctx="${ctx}">
 

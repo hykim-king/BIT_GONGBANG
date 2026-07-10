@@ -6,7 +6,7 @@
     <c:set var="cmtTargetId" value="${vo.artworkId}"/>
     <%@ include file="/WEB-INF/views/comment/comment_box.jsp" %>
   - 같은 화면에 여러 번 include 가능(공개 상세의 일차별 댓글). c:forEach 루프 안에서도 동작.
-  - 렌더링/이벤트는 resources/js/comment.js 가 .comment-box 단위로 자동 마운트.
+  - 렌더링/이벤트는 resources/assets/js/comment/comment.js 가 .comment-box 단위로 자동 마운트.
   - 비로그인: 목록/개수만 표시, 입력창 대신 로그인 안내.
 --%>
 <div class="comment-box"
