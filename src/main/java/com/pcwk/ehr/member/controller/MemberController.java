@@ -40,20 +40,10 @@ public class MemberController {
 		return "member/login";
 	}
 
-	@PostMapping("/doLogin.do")
-	public String doLogin(MemberVO param, HttpSession session, Model model) {
-		log.debug("doLogin param: {}", param);
-
-		MemberVO loginMember = memberService.login(param);
-		if (loginMember == null) {
-			model.addAttribute("errorMsg", "이메일 또는 비밀번호가 올바르지 않습니다.");
-			return "member/login";
-		}
-
-		session.setAttribute(SessionConst.LOGIN_MEMBER, loginMember);
-		return "redirect:/member/mypage.do";
-	}
-
+	/**
+	 * 로그인: 전체 페이지(login.jsp)와 헤더 모달이 함께 쓰는 단일 인증 경로.
+	 * 화면 전환은 응답 code 를 보고 JS 가 결정한다.
+	 */
 	@PostMapping("/doLoginAjax.do")
 	@ResponseBody
 	public MessageVO doLoginAjax(MemberVO param, HttpSession session) {

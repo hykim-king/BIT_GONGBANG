@@ -1,14 +1,13 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <c:set var="pageTitle" value="로그인 · 빚다"/>
+<c:set var="pageScript" value="member/login"/>
 <%@ include file="/WEB-INF/views/cmn/header.jsp" %>
 <div class="page-narrow">
 	<div class="section-head"><h2>로그인</h2><p>비로그인 접근 페이지에서 이동되었습니다. 로그인해 주세요.</p></div>
 	<div class="panel" style="max-width:420px;">
-		<c:if test="${not empty errorMsg}">
-		<p class="msg fail" style="margin:0 0 12px;"><c:out value="${errorMsg}"/></p>
-		</c:if>
-		<form action="${ctx}/member/doLogin.do" method="post">
+		<p class="msg" id="pageLoginMsg" style="margin:0 0 12px;"></p>
+		<form id="pageLoginForm" method="post">
 			<div class="field">
 				<label for="email">이메일</label>
 				<input type="email" class="text-input" id="email" name="email" autocomplete="email" required maxlength="255">

@@ -47,14 +47,11 @@ public class ArtworkEntryController {
 		log.debug("ArtworkEntryController"); // 빈 생성 확인용 로그
 	}
 
-	/**
-	 * 작업일지 등록 폼 (CC-ENT-01).
-	 * 빈 등록 화면만 렌더링. 저장은 doSave 가 처리.
+	/*
+	 * 작업일지 등록 폼(GET /artworkEntry/reg) 은 제거했다.
+	 * 대응하는 artworkEntry/reg.jsp 가 없어 404 였고,
+	 * 실제 등록은 working/view.jsp 안의 폼(#entryRegForm)이 doSave 로 처리한다.
 	 */
-	@GetMapping("/reg")
-	public String regForm() {
-		return "artworkEntry/reg"; // /WEB-INF/views/artworkEntry/reg.jsp
-	}
 
 	/**
 	 * 작업일지 등록 처리 (CC-ENT-01).
