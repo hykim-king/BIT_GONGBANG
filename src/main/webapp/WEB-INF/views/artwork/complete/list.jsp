@@ -10,20 +10,24 @@
 <c:set var="activeMenu" value="complete"/>
 <%@ include file="/WEB-INF/views/cmn/header.jsp" %>
 
-<div class="section-head"><h2>완성품</h2><p>완성해서 공개한 작품을 모아봅니다.</p></div>
+<div class="section-head"><h2 class="brand-heading">빚어낸 작품들</h2></div>
 
 <form class="board-toolbar" method="get" action="${ctx}/artwork/complete/list">
-	<select class="text-input" name="searchDiv">
-		<option value="1" ${param.searchDiv eq '3' ? '' : 'selected'}>제목</option>
-		<option value="3" ${param.searchDiv eq '3' ? 'selected' : ''}>작성자</option>
-	</select>
+	<div class="filter-group">
+		<select class="text-input" name="searchDiv">
+			<option value="1" ${param.searchDiv eq '3' ? '' : 'selected'}>제목</option>
+			<option value="3" ${param.searchDiv eq '3' ? 'selected' : ''}>작성자</option>
+		</select>
+		<select class="text-input" name="categoryId" id="categoryFilter" data-selected="${param.categoryId}">
+			<option value="0">카테고리 전체</option>
+		</select>
+	</div>
 	<input type="text" class="text-input search-word" name="searchWord" value="<c:out value='${param.searchWord}'/>" placeholder="완성품 안에서 검색">
-	<select class="text-input" name="categoryId" id="categoryFilter" data-selected="${param.categoryId}">
-		<option value="0">카테고리 전체</option>
-	</select>
 	<button type="submit" class="btn ghost">검색</button>
 	<c:if test="${not empty sessionScope.loginMember}">
-		<a class="btn" href="${ctx}/artwork/complete/reg">+ 새 글</a>
+		<a class="new-post-btn" href="${ctx}/artwork/complete/reg" aria-label="새 글" title="새 글">
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+		</a>
 	</c:if>
 </form>
 

@@ -10,20 +10,24 @@
 <c:set var="activeMenu" value="working"/>
 <%@ include file="/WEB-INF/views/cmn/header.jsp" %>
 
-<div class="section-head"><h2>공개작품</h2><p>작업 중인 과정을 기록하고 공유합니다. (완성 전환 후에도 작업일지가 있으면 계속 노출됩니다)</p></div>
+<div class="section-head"><h2 class="brand-heading">빚어가는 이야기</h2></div>
 
 <form class="board-toolbar" method="get" action="${ctx}/artwork/working/list">
-	<select class="text-input" name="searchDiv">
-		<option value="1" ${param.searchDiv eq '3' ? '' : 'selected'}>제목</option>
-		<option value="3" ${param.searchDiv eq '3' ? 'selected' : ''}>작성자</option>
-	</select>
+	<div class="filter-group">
+		<select class="text-input" name="searchDiv">
+			<option value="1" ${param.searchDiv eq '3' ? '' : 'selected'}>제목</option>
+			<option value="3" ${param.searchDiv eq '3' ? 'selected' : ''}>작성자</option>
+		</select>
+		<select class="text-input" name="categoryId" id="categoryFilter" data-selected="${param.categoryId}">
+			<option value="0">카테고리 전체</option>
+		</select>
+	</div>
 	<input type="text" class="text-input search-word" name="searchWord" value="<c:out value='${param.searchWord}'/>" placeholder="공개작품 안에서 검색">
-	<select class="text-input" name="categoryId" id="categoryFilter" data-selected="${param.categoryId}">
-		<option value="0">카테고리 전체</option>
-	</select>
 	<button type="submit" class="btn ghost">검색</button>
 	<c:if test="${not empty sessionScope.loginMember}">
-		<a class="btn" href="${ctx}/artwork/working/reg">+ 새 글</a>
+		<a class="new-post-btn" href="${ctx}/artwork/working/reg" aria-label="새 글" title="새 글">
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+		</a>
 	</c:if>
 </form>
 

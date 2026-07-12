@@ -46,7 +46,9 @@ public class MainController {
 		return new MessageVO("200", "조회 성공", mainService.getHomeFeed(pageNo, Math.min(pageSize, 48)));
 	}
 
-	/** 명예의전당 진입(CC-MAIN-02, 신설) */
+	/** 명예의전당 진입(CC-MAIN-02) — 작품은 무한스크롤로 전부 보여주고,
+	    순위 표식(메달/N위)은 상위 10위까지만 붙인다(11위부터는 표식 없이 카드만).
+	    순위 컷은 화면 규칙이라 hall.jsp / feed.js 의 RANK_LIMIT 에서 처리한다. */
 	@GetMapping("/hall.do")
 	public String hall(Model model) {
 		log.debug("hall");

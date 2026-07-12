@@ -105,7 +105,7 @@
 			<h3>대표사진 선택</h3>
 			<button type="button" class="modal-close" aria-label="닫기">&times;</button>
 		</div>
-		<p class="hint" style="margin:0 0 6px;">작품 사진 중 완성 게시판 썸네일로 쓸 대표사진을 선택하세요. (작업일지 사진은 대상이 아닙니다)</p>
+		<p class="hint" style="margin:0 0 6px;">사진을 <strong>끌어다 놓아 순서를 정하세요. 1번이 완성 게시판 썸네일(대표)</strong>이 됩니다. 사진을 클릭하면 바로 대표로 지정됩니다. (작업일지 사진은 대상이 아닙니다)</p>
 		<div class="photo-grid" id="completePhotoGrid"></div>
 		<form method="post" action="${ctx}/artwork/working/complete">
 			<input type="hidden" name="artworkId" value="${vo.artworkId}">

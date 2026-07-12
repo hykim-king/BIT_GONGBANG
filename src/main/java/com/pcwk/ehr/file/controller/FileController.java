@@ -98,6 +98,27 @@ public class FileController {
 		return new MessageVO("400", "대표 이미지 지정 실패(권한 없음 또는 데이터 없음)");
 	}
 
+	// file_order — 드래그앤드롭 순서 변경. fileIds 는 "12,7,9" 처럼 콤마로 이어 보낸다(맨 앞이 대표).
+	@PostMapping("/reorder.do")
+	@ResponseBody
+	public MessageVO reorder(
+			@RequestParam("fileIds") int[] fileIds,
+			FileVO param,
+			HttpSession session) {
+		log.debug("reorder param: " + param);
+		MemberVO loginMember = getLoginMember(session);
+		if (loginMember == null) {
+			return new MessageVO("401", "로그인이 필요합니다.");
+		}
+		param.setMemberId(loginMember.getMemberId());
+
+		int flag = fileService.reorder(param, fileIds);
+		if (flag > 0) {
+			return new MessageVO("200", "순서 변경 성공");
+		}
+		return new MessageVO("400", "순서 변경 실패(권한 없음 또는 잘못된 요청)");
+	}
+
 	// file_del
 	@PostMapping("/remove.do")
 	@ResponseBody
