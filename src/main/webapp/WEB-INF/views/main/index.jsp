@@ -25,8 +25,11 @@
 			<div class="meta">
 				<div class="t"><c:out value="${a.title}"/></div>
 				<div class="row">
-					<span><c:out value="${a.nickname}"/> · <c:out value="${a.categoryNm}"/></span>
-					<span class="heart">&#10084; ${a.likeCount}</span>
+					<span class="who"><c:out value="${a.nickname}"/> · <c:out value="${a.categoryNm}"/></span>
+					<span class="stats">
+						<span class="view">조회 ${a.viewCount}</span>
+						<span class="heart">&#10084; ${a.likeCount}</span>
+					</span>
 				</div>
 			</div>
 		</a>

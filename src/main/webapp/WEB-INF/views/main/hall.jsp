@@ -10,12 +10,24 @@
 <c:set var="hideAuthButtons" value="true"/>
 <%@ include file="/WEB-INF/views/cmn/header.jsp" %>
 
-<div class="section-head"><h2>명예의전당</h2><p>기간 제한 없이 누적 인기순으로 정렬됩니다.</p></div>
-<div class="masonry-feed" data-endpoint="/main/hallMore.do" data-rank="true">
+<%-- 순위 표식(메달/N위)은 상위 몇 위까지만 붙일지를 rankLimit 값 하나로 정한다.
+     JSP(1페이지 서버렌더)와 feed.js(2페이지 이후)가 이 값을 각자 하드코딩하면
+     나중에 하나만 고쳤을 때 어긋나므로, data-rank-limit 속성 하나로 공유한다. --%>
+<c:set var="rankLimit" value="10"/>
+<div class="section-head"><h2 class="hall-heading">명예의전당</h2></div>
+<div class="masonry-feed" data-endpoint="/main/hallMore.do" data-rank="true" data-rank-limit="${rankLimit}">
 	<div class="masonry">
 		<c:forEach var="a" items="${list}" varStatus="st">
 		<a class="art-card" href="${ctx}/artwork/complete/view?artworkId=${a.artworkId}">
-			<span class="rank-badge">${st.count}위</span>
+			<%-- 순위 표식: 1~3위 메달 이미지, 4~rankLimit위 텍스트 뱃지, 그 뒤는 표식 없이 카드만. --%>
+			<c:choose>
+				<c:when test="${st.count le 3}">
+					<img class="rank-medal" src="${ctx}/resources/assets/image/rank-${st.count}.png" alt="${st.count}위" width="34" height="34">
+				</c:when>
+				<c:when test="${st.count le rankLimit}">
+					<span class="rank-badge">${st.count}위</span>
+				</c:when>
+			</c:choose>
 			<c:choose>
 				<c:when test="${a.repFileId > 0}">
 					<img class="thumb" src="${ctx}/file/download.do?fileId=${a.repFileId}" alt="<c:out value='${a.title}'/>" loading="lazy">
@@ -27,8 +39,11 @@
 			<div class="meta">
 				<div class="t"><c:out value="${a.title}"/></div>
 				<div class="row">
-					<span><c:out value="${a.nickname}"/> · <c:out value="${a.categoryNm}"/></span>
-					<span class="heart">&#10084; ${a.likeCount}</span>
+					<span class="who"><c:out value="${a.nickname}"/> · <c:out value="${a.categoryNm}"/></span>
+					<span class="stats">
+						<span class="view">조회 ${a.viewCount}</span>
+						<span class="heart">&#10084; ${a.likeCount}</span>
+					</span>
 				</div>
 			</div>
 		</a>

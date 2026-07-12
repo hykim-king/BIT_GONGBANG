@@ -3,7 +3,9 @@ package com.pcwk.ehr.file.service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -120,6 +122,56 @@ public class FileService {
 		moveFound.setSortNo(REP_SLOT);
 		moveFound.setIsRep("Y");
 		return fileMapper.updateSortAndRep(moveFound);
+	}
+
+	/**
+	 * 드래그앤드롭 순서 변경 — 받은 순서대로 sort_no 를 1..N 으로 다시 매기고,
+	 * 맨 앞(1번 슬롯)을 대표(is_rep='Y')로 지정한다.
+	 *
+	 * 클라이언트가 보낸 fileIds 를 그대로 믿지 않는다.
+	 * 대상에 실제로 달린 파일 전체를 DB 에서 다시 읽어와서
+	 * (1) 전부 본인 파일인지 (2) 보내온 집합이 DB 집합과 정확히 일치하는지(누락·중복·외부 id 없음)
+	 * 를 확인한 뒤에만 반영한다.
+	 *
+	 * SQL 은 새로 만들지 않고 기존 updateSortAndRep 를 반복 호출한다
+	 * (renormalizeSlotsAfterRepDelete 와 같은 방식).
+	 */
+	@Transactional
+	public int reorder(FileVO param, int[] fileIds) {
+		if (param == null || param.getTargetType() == null || param.getTargetId() <= 0
+				|| param.getMemberId() <= 0 || fileIds == null || fileIds.length == 0) {
+			return 0;
+		}
+
+		List<FileVO> current = fileMapper.selectByTarget(toTargetKey(param));
+		if (current.size() != fileIds.length) {
+			return 0;
+		}
+
+		Set<Integer> owned = new LinkedHashSet<>();
+		for (FileVO file : current) {
+			if (file.getMemberId() != param.getMemberId()) {
+				return 0;
+			}
+			owned.add(file.getFileId());
+		}
+
+		Set<Integer> requested = new LinkedHashSet<>();
+		for (int fileId : fileIds) {
+			requested.add(fileId);
+		}
+		if (!owned.equals(requested)) {
+			return 0;
+		}
+
+		for (int i = 0; i < fileIds.length; i++) {
+			FileVO update = new FileVO();
+			update.setFileId(fileIds[i]);
+			update.setSortNo(i + 1);
+			update.setIsRep(i == 0 ? "Y" : "N");
+			fileMapper.updateSortAndRep(update);
+		}
+		return fileIds.length;
 	}
 
 	// 파일 1장 삭제 — DB·슬롯 정리 후 디스크 삭제 (IOException 시 DB 롤백)

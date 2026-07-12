@@ -17,6 +17,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><c:out value="${empty pageTitle ? '빚다 · BITDA' : pageTitle}"/></title>
+
+<%-- 파비콘 --%>
+<link rel="icon" href="${ctx}/resources/assets/image/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="${ctx}/resources/assets/image/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="${ctx}/resources/assets/image/favicon-16.png">
+<link rel="apple-touch-icon" href="${ctx}/resources/assets/image/apple-touch-icon.png">
+
 <link rel="stylesheet" href="${ctx}/resources/assets/css/common.css">
 <%-- defer: 문서 파싱을 막지 않고, 로드 순서대로 DOMContentLoaded 직전에 실행된다.
      common.js 가 window.bitda.esc / serializeForm 을 정의하므로 반드시 먼저 와야 한다. --%>
@@ -37,7 +44,7 @@
 <%-- ==================== 상단바 ==================== --%>
 <header class="topbar">
 	<a class="brand" href="${ctx}/main/index.do">
-		<span class="brand-mark">빚</span>
+		<img class="brand-mark" src="${ctx}/resources/assets/image/logo-mark.png" alt="빚다 로고">
 		<span class="brand-text"><strong>빚다</strong><span>BITDA</span></span>
 	</a>
 	<div class="auth-actions">
@@ -51,10 +58,16 @@
 			<c:otherwise>
 				<span class="nick"><c:out value="${sessionScope.loginMember.nickname}"/></span>
 				<c:if test="${sessionScope.loginMember.isAdmin eq 'Y'}">
-					<a class="btn ghost" href="${ctx}/admin/dashboard.do">관리자페이지</a>
+					<a class="icon-btn" href="${ctx}/admin/dashboard.do" aria-label="관리자페이지" data-tip="관리자페이지">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 5.5 6.4v5c0 4.3 2.8 7.3 6.5 8.6 3.7-1.3 6.5-4.3 6.5-8.6v-5Z"/><path d="M9.3 12l2 2 3.6-4.2"/></svg>
+					</a>
 				</c:if>
-				<a class="btn ghost" href="${ctx}/member/mypage.do">마이페이지</a>
-				<a class="btn ghost" href="${ctx}/member/logout.do">로그아웃</a>
+				<a class="icon-btn" href="${ctx}/member/mypage.do" aria-label="마이페이지" data-tip="마이페이지">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.3" r="3.3"/><path d="M5.5 19.5c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/></svg>
+				</a>
+				<a class="icon-btn" href="${ctx}/member/logout.do" aria-label="로그아웃" data-tip="로그아웃">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4.5H8a1.5 1.5 0 0 0-1.5 1.5v12A1.5 1.5 0 0 0 8 19.5h6"/><path d="M11 12h9m0 0-3-3m3 3-3 3"/></svg>
+				</a>
 			</c:otherwise>
 		</c:choose>
 	</div>
@@ -134,10 +147,22 @@
 <div class="layout">
 	<aside class="side">
 		<nav class="side-nav">
-			<a href="${ctx}/main/index.do" class="${activeMenu eq 'home' ? 'on' : ''}">홈</a>
-			<a href="${ctx}/artwork/complete/list" class="${activeMenu eq 'complete' ? 'on' : ''}">완성품</a>
-			<a href="${ctx}/artwork/working/list" class="${activeMenu eq 'working' ? 'on' : ''}">공개작품</a>
-			<a href="${ctx}/main/hall.do" class="${activeMenu eq 'hall' ? 'on' : ''}">명예의전당</a>
+			<a href="${ctx}/main/index.do" class="${activeMenu eq 'home' ? 'on' : ''}">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6.5 10v9.5h11V10"/><path d="M10 19.5v-5h4v5"/></svg>
+				<span class="lbl">홈</span>
+			</a>
+			<a href="${ctx}/artwork/complete/list" class="${activeMenu eq 'complete' ? 'on' : ''}">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9.5" r="5.2"/><path d="m8.7 14 -1.5 6.3 4.8-2.6 4.8 2.6-1.5-6.3"/></svg>
+				<span class="lbl">완성품</span>
+			</a>
+			<a href="${ctx}/artwork/working/list" class="${activeMenu eq 'working' ? 'on' : ''}">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5c-3.6 1-6.5 1-6.5 1v7.2c0 4 2.9 6.3 6.5 7.3 3.6-1 6.5-3.3 6.5-7.3V5.5s-2.9 0-6.5-1Z"/><path d="M9.3 12.2l2 2 3.4-4"/></svg>
+				<span class="lbl">공개작품</span>
+			</a>
+			<a href="${ctx}/main/hall.do" class="${activeMenu eq 'hall' ? 'on' : ''}">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5h10v3.8c0 3.3-2.1 5.7-5 6.1-2.9-.4-5-2.8-5-6.1V4.5Z"/><path d="M7 5.5H4.8c-.7 0-1.3.6-1.3 1.3 0 2 1.6 3.6 3.6 3.7"/><path d="M17 5.5h2.2c.7 0 1.3.6 1.3 1.3 0 2-1.6 3.6-3.6 3.7"/><path d="M12 14.4v2.6"/><path d="M9 19.5h6"/><path d="M10.3 17h3.4l.3 2.5h-4l.3-2.5Z"/></svg>
+				<span class="lbl">명예의전당</span>
+			</a>
 		</nav>
 	</aside>
 	<main class="content">

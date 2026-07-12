@@ -23,6 +23,6 @@
 			파일 선택<input type="file" class="up-input" accept="image/jpeg,image/png,image/webp" multiple style="display:none;">
 		</label>
 	</div>
-	<p class="hint up-hint" style="display:none;">jpg/jpeg/png/webp, 파일당 5MB, 최대 9장. 첫 장이 대표(썸네일)가 됩니다.</p>
+	<p class="hint up-hint" style="display:none;">jpg/jpeg/png/webp, 파일당 5MB, 최대 9장. <strong>사진을 끌어다 놓아 순서를 바꿀 수 있고, 1번이 대표(썸네일)가 됩니다.</strong></p>
 	<div class="up-grid"></div>
 </div>

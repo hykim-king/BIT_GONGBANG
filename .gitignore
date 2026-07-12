@@ -22,3 +22,6 @@ Thumbs.db
 
 # 개인별 업로드 경로 (upload.properties 덮어쓰기)
 src/main/resources/config/upload.local.properties
+
+# 실 계정 비밀번호가 평문으로 들어있는 DB 백업 — 절대 커밋 금지
+docs/db_backup_*.sql
