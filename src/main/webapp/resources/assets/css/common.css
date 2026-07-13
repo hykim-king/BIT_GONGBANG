@@ -111,9 +111,10 @@ button { font-family: inherit; }
 }
 .brand { display: flex; align-items: center; gap: 10px; }
 /* 로고 마크 — resources/assets/image/logo-mark.png
-   PNG 자체가 이미 둥근 사각형(모서리 투명)이므로 border-radius 를 또 주면 모서리를 두 번 깎는다. */
+   PNG 자체가 이미 둥근 사각형이고 모서리 바깥은 불투명 흰색(#FFFFFF)이라
+   --bg-elevated(헤더 배경, 흰색)와 자연히 섞인다. border-radius 를 또 주면 모서리를 두 번 깎으니 주지 않는다. */
 .brand-mark {
-  width: 34px; height: 34px;
+  width: 44px; height: 44px;
   display: block; flex-shrink: 0; object-fit: contain;
 }
 .brand-text strong {
