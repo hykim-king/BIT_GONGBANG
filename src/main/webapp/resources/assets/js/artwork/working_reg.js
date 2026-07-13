@@ -28,6 +28,8 @@ document.addEventListener('DOMContentLoaded', function () {
 		regForm.addEventListener('submit', function (e) {
 			e.preventDefault();
 			if (!document.getElementById('categoryId').value) { alert('카테고리를 선택하세요.'); return; }
+			const upCheck = window.bitda.uploader.get(document.querySelector('.upload-widget'));
+			if (!upCheck || upCheck.count() === 0) { alert('대표 사진을 1장 이상 등록하세요.'); return; }
 			const form = this;
 			const nativeXhr = $.ajaxSettings.xhr();
 			$.ajax({

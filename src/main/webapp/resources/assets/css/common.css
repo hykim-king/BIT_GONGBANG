@@ -117,15 +117,18 @@ button { font-family: inherit; }
   display: block; flex-shrink: 0; object-fit: contain;
 }
 .brand-text strong {
-  font-family: 'Gaegu', 'Pretendard', sans-serif; font-size: 17px; font-weight: 700;
+  font-family: 'SongMyung', 'Pretendard', serif; font-size: 17px; font-weight: 400;
   display: block; line-height: 1.2;
 }
 .brand-text span { font-size: 10px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: var(--micro-tracking); }
 
-/* 목록 페이지 브랜드 제목("빚어낸 작품들" 등) — 로고 글자와 같은 손글씨체로 통일 */
-.brand-heading { font-family: 'Gaegu', 'Pretendard', sans-serif; font-weight: 700; font-size: 21px; }
+/* 목록 페이지 브랜드 제목("빚어낸 작품들", "빚어가는 이야기") — 명예의전당과 같은 송명체로 통일.
+   SongMyung은 Regular(400)만 로드돼 있어 weight도 hall-heading과 맞춘다(700으로 두면 페이크볼드로 뭉개짐).
+   .section-head h2 보다 명시적으로 우선하도록 .section-head 를 붙여 명시도를 올린다
+   (안 그러면 .section-head h2 의 font-weight:700/font-size:17px 에 덮인다). */
+.section-head .brand-heading { font-family: 'SongMyung', 'Pretendard', serif; font-weight: 400; font-size: 21px; }
 /* 명예의전당 제목 — 손글씨 대신 격조 있는 세리프(송명체) */
-.hall-heading { font-family: 'SongMyung', 'Pretendard', serif; font-weight: 400; font-size: 23px; letter-spacing: .01em; }
+.section-head .hall-heading { font-family: 'SongMyung', 'Pretendard', serif; font-weight: 400; font-size: 23px; letter-spacing: .01em; }
 .auth-actions { display: flex; align-items: center; gap: 8px; }
 .auth-actions .nick { font-size: 12.5px; font-weight: 600; color: var(--ink-soft); margin-right: 4px; }
 
